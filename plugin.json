@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "slug": "loyalty-points",
+  "name": "Loyalty Points",
+  "version": "1.1.0",
+  "author": { "name": "Ovynt Labs" },
+  "description": "Reward repeat buyers with points and tiers — a points ledger, per-customer balances, tier standing and programme settings.",
+  "icon": "tabler-gift",
+  "requires": { "ovynt": ">=1.2.0 <2.0.0" },
+  "reach": ["admin"],
+  "licence": { "type": "free" },
+  "admin": {
+    "modules": ["loyalty-members", "loyalty-transactions", "loyalty-tiers"],
+    "permissions": { "loyalty": ["view", "create", "update", "delete"] }
+  },
+  "migrations": "backend/migrations",
+  "uninstall": {
+    "drop_tables": [
+      "loyalty_transactions",
+      "loyalty_members",
+      "loyalty_settings",
+      "loyalty_tiers"
+    ]
+  }
+}

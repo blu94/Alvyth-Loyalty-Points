@@ -1,0 +1,11 @@
+{
+  "name": "Points Activity",
+  "type": "loyalty-transactions",
+  "resource": "loyalty",
+  "routeBase": "module/loyalty-transactions",
+  "order": 41,
+  "icon": "tabler-arrows-exchange",
+  "api": "/admin/modules/loyalty-transactions",
+  "table": { "$ref": "index.json" },
+  "form": { "$ref": "form.json" }
+}

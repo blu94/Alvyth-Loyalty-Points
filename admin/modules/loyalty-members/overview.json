@@ -1,0 +1,84 @@
+{
+  "ui": { "type": "section", "icon": "tabler-chart-pie", "class": "pa-5" },
+  "name": "Loyalty Overview",
+  "subtitle": "Points issued, redeemed and still owed across the whole programme.",
+  "elements": [
+    {
+      "ui": { "type": "row", "dense": false },
+      "elements": [
+        {
+          "ui": { "type": "column", "cols": 12, "md": 6 },
+          "elements": [
+            {
+              "ui": { "type": "section", "class": "h-100", "icon": "tabler-coins" },
+              "name": "Points",
+              "subtitle": "Outstanding is what customers can still spend.",
+              "elements": [
+                {
+                  "ui": { "type": "field" },
+                  "type": "display",
+                  "key": "points_issued",
+                  "label": "Total issued"
+                },
+                {
+                  "ui": { "type": "field" },
+                  "type": "display",
+                  "key": "points_redeemed",
+                  "label": "Total redeemed"
+                },
+                {
+                  "ui": { "type": "field" },
+                  "type": "display",
+                  "key": "points_outstanding",
+                  "label": "Outstanding"
+                },
+                {
+                  "ui": { "type": "field" },
+                  "type": "display",
+                  "key": "liability",
+                  "label": "Outstanding value (store currency)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ui": { "type": "column", "cols": 12, "md": 6 },
+          "elements": [
+            {
+              "ui": { "type": "section", "class": "h-100", "icon": "tabler-users" },
+              "name": "Members",
+              "subtitle": "Who is enrolled, and how they are spread across tiers.",
+              "elements": [
+                {
+                  "ui": { "type": "field" },
+                  "type": "display",
+                  "key": "members_total",
+                  "label": "Members"
+                },
+                {
+                  "ui": { "type": "field" },
+                  "type": "display",
+                  "key": "members_active",
+                  "label": "Active"
+                },
+                {
+                  "ui": { "type": "field" },
+                  "type": "display",
+                  "key": "unenrolled_customers",
+                  "label": "Customers not yet enrolled"
+                },
+                {
+                  "ui": { "type": "field" },
+                  "type": "display",
+                  "key": "tier_breakdown",
+                  "label": "By tier"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

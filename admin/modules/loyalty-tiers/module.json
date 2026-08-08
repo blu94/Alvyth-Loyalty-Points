@@ -1,0 +1,11 @@
+{
+  "name": "Loyalty Tiers",
+  "type": "loyalty-tiers",
+  "resource": "loyalty",
+  "routeBase": "module/loyalty-tiers",
+  "order": 42,
+  "icon": "tabler-gift",
+  "api": "/admin/modules/loyalty-tiers",
+  "table": { "$ref": "index.json" },
+  "form": { "$ref": "form.json" }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "Loyalty",
+  "type": "loyalty-members",
+  "resource": "loyalty",
+  "routeBase": "module/loyalty-members",
+  "order": 40,
+  "icon": "tabler-award",
+  "api": "/admin/modules/loyalty-members",
+  "table": { "$ref": "index.json" },
+  "form": { "$ref": "form.json" },
+  "overview": { "$ref": "overview.json" },
+  "settings": { "$ref": "settings.json" },
+  "navigation": [
+    {
+      "title": "Overview",
+      "icon": "tabler-chart-pie",
+      "to": { "name": "module-type-page-slug", "params": { "slug": "overview" } }
+    },
+    { "title": "Members", "icon": "tabler-users", "to": "module-type" },
+    { "title": "Enrol Customer", "icon": "tabler-user-plus", "to": "module-type-create" },
+    {
+      "title": "Settings",
+      "icon": "tabler-settings",
+      "to": { "name": "module-type-page-slug", "params": { "slug": "settings" } }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# Release artefacts — built from this source, never part of it.
+/dist
+*.zip
+
+# Written by `php artisan ovynt:plugin-sign` at release time. It covers a digest of
+# every file, so a committed signature goes stale on the next edit and would then fail
+# verification on a customer's install — build output, not source.
+plugin.sig
+
+# Signing and licence keys. A private key in a public repository would let anyone mint
+# licences for this plugin, and revoking it means re-issuing every key ever sold.
+*.pem
+*.key
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

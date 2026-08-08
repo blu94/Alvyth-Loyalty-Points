@@ -1,0 +1,122 @@
+{
+  "expandable": false,
+  "headerActions": {
+    "elements": [
+      {
+        "key": "reload",
+        "ui": { "type": "button", "icon": "tabler-refresh", "color": "success", "rounded": true },
+        "tooltip": "Refresh List",
+        "action": "reload",
+        "class": "ms-2"
+      },
+      {
+        "key": "create",
+        "ui": { "type": "button", "icon": "tabler-plus", "color": "primary", "rounded": "md" },
+        "label": "Enrol Customer",
+        "tooltip": "Add a customer to the loyalty programme",
+        "action": "navigate",
+        "to": "/module/loyalty-members/create"
+      }
+    ]
+  },
+  "filters": {
+    "elements": [
+      {
+        "ui": { "type": "field" },
+        "key": "status",
+        "label": "Status",
+        "placeholder": "Any status",
+        "type": "select",
+        "options": {
+          "url": "/admin/modules/loyalty-members/options",
+          "master": "status"
+        }
+      },
+      {
+        "ui": { "type": "field" },
+        "key": "tier_id",
+        "label": "Tier",
+        "placeholder": "Any tier",
+        "type": "autocomplete",
+        "options": {
+          "url": "/admin/modules/loyalty-tiers",
+          "master": "data",
+          "map": { "title": "title", "value": "id" }
+        }
+      }
+    ]
+  },
+  "elements": [
+    {
+      "ui": { "type": "display" },
+      "label": "ID",
+      "key": "id",
+      "sortable": true,
+      "width": "60px"
+    },
+    {
+      "ui": { "type": "display" },
+      "label": "Customer",
+      "key": "user.name",
+      "sortable": false,
+      "searchable": true
+    },
+    {
+      "ui": { "type": "display" },
+      "label": "Email",
+      "key": "user.email",
+      "sortable": false
+    },
+    {
+      "ui": { "type": "display" },
+      "label": "Balance",
+      "key": "balance",
+      "sortable": true,
+      "align": "end"
+    },
+    {
+      "ui": { "type": "display" },
+      "label": "Lifetime",
+      "key": "lifetime_points",
+      "sortable": true,
+      "align": "end"
+    },
+    {
+      "ui": { "type": "display" },
+      "label": "Tier",
+      "key": "tier.title",
+      "sortable": false
+    },
+    {
+      "ui": { "type": "display" },
+      "label": "Status",
+      "key": "status",
+      "sortable": false,
+      "align": "center",
+      "type": "status"
+    },
+    {
+      "ui": { "type": "display" },
+      "label": "Joined",
+      "key": "joined_at",
+      "sortable": true,
+      "align": "center",
+      "type": "datetime"
+    }
+  ],
+  "actions": {
+    "elements": [
+      "edit",
+      {
+        "key": "delete",
+        "action": "delete",
+        "ui": { "type": "button", "icon": "tabler-trash", "color": "error", "rounded": true },
+        "params": {
+          "confirm": true,
+          "confirmText": "Remove this customer from the loyalty programme? Their points history will be deleted with them."
+        }
+      }
+    ],
+    "class": "fit"
+  }
+}

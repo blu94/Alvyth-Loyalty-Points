@@ -1,0 +1,61 @@
+{
+  "ui": { "type": "section", "icon": "tabler-settings", "class": "pa-5" },
+  "name": "Programme Settings",
+  "subtitle": "The rules the programme runs on. These are read by anything that issues or redeems points.",
+  "elements": [
+    {
+      "ui": { "type": "row", "dense": false },
+      "elements": [
+        {
+          "ui": { "type": "field", "cols": 12, "md": 6 },
+          "key": "points_per_currency",
+          "type": "number",
+          "label": "Points earned per 1.00 spent",
+          "placeholder": "e.g. 1",
+          "hint": "A rate of 1 gives a customer 250 points for a 250.00 order.",
+          "default": 1,
+          "rules": ["required", "numeric", "min:0"]
+        },
+        {
+          "ui": { "type": "field", "cols": 12, "md": 6 },
+          "key": "redeem_value",
+          "type": "number",
+          "label": "Value of 1 point when redeemed",
+          "placeholder": "e.g. 0.01",
+          "hint": "Used to value the outstanding balance on the Overview.",
+          "default": 0.01,
+          "rules": ["required", "numeric", "min:0"]
+        },
+        {
+          "ui": { "type": "field", "cols": 12, "md": 6 },
+          "key": "minimum_redemption",
+          "type": "number",
+          "label": "Minimum points before redeeming",
+          "placeholder": "e.g. 500",
+          "hint": "0 means a customer may redeem any amount.",
+          "default": 0,
+          "rules": ["required", "integer", "min:0"]
+        },
+        {
+          "ui": { "type": "field", "cols": 12, "md": 6 },
+          "key": "expiry_months",
+          "type": "number",
+          "label": "Points expire after (months)",
+          "placeholder": "Leave empty for never",
+          "hint": "Expiry is not applied automatically — see the README.",
+          "rules": ["nullable", "integer", "min:0"]
+        }
+      ]
+    },
+    {
+      "ui": { "type": "row", "dense": true },
+      "elements": [
+        {
+          "ui": { "type": "button", "color": "primary", "icon": "tabler-checkbox" },
+          "action": "save",
+          "label": "Save Settings"
+        }
+      ]
+    }
+  ]
+}

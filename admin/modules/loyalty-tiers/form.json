@@ -1,0 +1,86 @@
+{
+  "elements": [
+    {
+      "ui": {
+        "type": "section",
+        "cols": 12,
+        "icon": "tabler-gift"
+      },
+      "name": "Tier Details",
+      "subtitle": "What the tier is called, and how many points a customer needs to reach it",
+      "elements": [
+        {
+          "ui": { "type": "field", "cols": 8 },
+          "key": "title",
+          "type": "text",
+          "label": "Tier",
+          "placeholder": "e.g. Gold",
+          "rules": ["required", "max:120"]
+        },
+        {
+          "ui": { "type": "field", "cols": 4 },
+          "key": "threshold",
+          "type": "number",
+          "label": "Points needed",
+          "placeholder": "e.g. 500",
+          "hint": "Points a customer must earn to reach this tier.",
+          "default": 0,
+          "rules": ["required", "integer", "min:0"]
+        }
+      ]
+    }
+  ],
+  "sidebar": {
+    "elements": [
+      {
+        "ui": { "type": "row", "dense": true },
+        "elements": [
+          {
+            "ui": { "type": "field" },
+            "key": "status",
+            "type": "select",
+            "label": "Status",
+            "default": "active",
+            "options": {
+              "items": [
+                { "title": "Active", "value": "active" },
+                { "title": "Inactive", "value": "inactive" }
+              ]
+            },
+            "rules": ["required", "in:active,inactive"]
+          }
+        ]
+      }
+    ],
+    "footer": {
+      "elements": [
+        {
+          "ui": { "type": "row", "dense": true },
+          "elements": [
+            {
+              "ui": {
+                "type": "button",
+                "color": "primary",
+                "icon": "tabler-checkbox"
+              },
+              "action": "save",
+              "label": "Save Changes",
+              "redirect": false
+            },
+            {
+              "ui": {
+                "type": "button",
+                "color": "secondary",
+                "variant": "tonal",
+                "icon": "tabler-arrow-left"
+              },
+              "action": "cancel",
+              "label": "Cancel",
+              "redirect": "/module/loyalty-tiers"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

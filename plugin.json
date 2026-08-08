@@ -13,6 +13,9 @@
     "modules": ["loyalty-members", "loyalty-transactions", "loyalty-tiers"],
     "permissions": { "loyalty": ["view", "create", "update", "delete"] }
   },
+  "listeners": {
+    "App\\Events\\OrderStatusChanged": ["Backend\\Listeners\\AwardPointsOnPaidOrder"]
+  },
   "migrations": "backend/migrations",
   "uninstall": {
     "drop_tables": [

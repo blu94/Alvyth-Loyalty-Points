@@ -144,13 +144,6 @@ class LoyaltyMemberRepository
 
         $settings = LoyaltySetting::current();
 
-        $perTier = LoyaltyTier::query()
-            ->orderBy('threshold')
-            ->withCount('members')
-            ->get()
-            ->map(fn ($tier) => "{$tier->title}: {$tier->members_count}")
-            ->implode('  ·  ');
-
         return [
             'members_total'     => LoyaltyMember::count(),
             'members_active'    => LoyaltyMember::where('status', 'active')->count(),
@@ -167,7 +160,183 @@ class LoyaltyMemberRepository
                 ->whereNotIn('id', LoyaltyMember::query()->select('user_id'))
                 ->count(),
 
-            'tier_breakdown'    => $perTier !== '' ? $perTier : 'No tiers defined yet',
+            'tier_distribution' => $this->tierDistribution(),
+            'points_flow'       => $this->pointsFlow(),
+            'enrolments'        => $this->enrolments(),
+            'top_members'       => $this->topMembers(),
         ];
+    }
+
+    /**
+     * Members per tier, as a whole.
+     *
+     * **"No tier" is a slice, not an omission.** A pie is only honest when its parts sum to
+     * the population it claims to describe, and everyone below the lowest threshold is a
+     * real member — dropping them would show a programme where every customer has standing.
+     * On a new programme that slice IS the programme, which is exactly what the operator
+     * needs to see.
+     *
+     * Disabled tiers are included when they still hold members: `recalculate()` only stops
+     * *awarding* a switched-off tier, so members already standing in one keep it until their
+     * next ledger write. Hiding it would lose those members from the total.
+     *
+     * @return array{labels:array<int,string>,series:array<int,int>}
+     */
+    private function tierDistribution(): array
+    {
+        $tiers = LoyaltyTier::query()
+            ->orderBy('threshold')
+            ->withCount('members')
+            ->get()
+            ->filter(fn ($tier) => $tier->status === 'active' || $tier->members_count > 0);
+
+        $labels = $tiers->map(fn ($tier) => (string) $tier->title)->values()->all();
+        $series = $tiers->map(fn ($tier) => (int) $tier->members_count)->values()->all();
+
+        $untiered = LoyaltyMember::whereNull('tier_id')->count();
+
+        if ($untiered > 0) {
+            $labels[] = 'No tier yet';
+            $series[] = $untiered;
+        }
+
+        return ['labels' => $labels, 'series' => $series];
+    }
+
+    /**
+     * Points issued against points redeemed, by month.
+     *
+     * The one chart that answers "is this programme accumulating a liability?" — issued
+     * consistently above redeemed means points are piling up unspent, which is a cost the
+     * balance sheet has not met yet.
+     *
+     * Both series are drawn positive. Redemptions are stored negative (the ledger's sign
+     * carries meaning), but a bar chart of one positive and one negative series reads as a
+     * cancellation rather than a comparison.
+     *
+     * @return array{labels:array<int,string>,series:array<int,array{name:string,data:array<int,int>}>}
+     */
+    private function pointsFlow(): array
+    {
+        $months = $this->recentMonths();
+
+        $rows = LoyaltyTransaction::query()
+            ->where('created_at', '>=', now()->startOfMonth()->subMonths(self::MONTHS - 1))
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym")
+            ->selectRaw('SUM(CASE WHEN points > 0 THEN points ELSE 0 END) as issued')
+            ->selectRaw('SUM(CASE WHEN points < 0 THEN -points ELSE 0 END) as redeemed')
+            ->groupBy('ym')
+            ->get()
+            ->keyBy('ym');
+
+        return [
+            'labels' => array_values($months),
+            'series' => [
+                [
+                    'name' => 'Issued',
+                    'data' => $this->alignToMonths($months, $rows, 'issued'),
+                ],
+                [
+                    'name' => 'Redeemed',
+                    'data' => $this->alignToMonths($months, $rows, 'redeemed'),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * New members per month — how fast the programme is recruiting.
+     *
+     * Counted on `joined_at`, not `created_at`: enrolling a customer who has been shopping
+     * for a year is an event the operator dates themselves, and the row's insert time would
+     * report it as new business this month.
+     *
+     * @return array{labels:array<int,string>,series:array<int,array{name:string,data:array<int,int>}>}
+     */
+    private function enrolments(): array
+    {
+        $months = $this->recentMonths();
+
+        $rows = LoyaltyMember::query()
+            ->where('joined_at', '>=', now()->startOfMonth()->subMonths(self::MONTHS - 1))
+            ->selectRaw("DATE_FORMAT(joined_at, '%Y-%m') as ym")
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('ym')
+            ->get()
+            ->keyBy('ym');
+
+        return [
+            'labels' => array_values($months),
+            'series' => [[
+                'name' => 'Joined',
+                'data' => $this->alignToMonths($months, $rows, 'total'),
+            ]],
+        ];
+    }
+
+    /**
+     * The largest unspent balances.
+     *
+     * Balance, not lifetime points: this is the question "who is holding the liability",
+     * and a customer who earned and spent 10,000 costs the shop nothing today.
+     *
+     * @return array{labels:array<int,string>,series:array<int,array{name:string,data:array<int,int>}>}
+     */
+    private function topMembers(): array
+    {
+        $members = LoyaltyMember::query()
+            ->with('user')
+            ->where('balance', '>', 0)
+            ->orderByDesc('balance')
+            ->limit(8)
+            ->get();
+
+        return [
+            'labels' => $members
+                ->map(fn ($member) => $member->user->name ?? "Member #{$member->id}")
+                ->all(),
+            'series' => [[
+                'name' => 'Balance',
+                'data' => $members->map(fn ($member) => (int) $member->balance)->all(),
+            ]],
+        ];
+    }
+
+    /** How many months the trend charts cover. */
+    private const MONTHS = 12;
+
+    /**
+     * The last twelve months as `['2026-08' => 'Aug 2026', …]`, oldest first.
+     *
+     * Built in PHP rather than taken from the query results so a month with no activity is
+     * a **zero**, not a missing column. A chart that silently drops empty months compresses
+     * a quiet period into nothing and makes the trend look steadier than it was.
+     *
+     * @return array<string,string>
+     */
+    private function recentMonths(): array
+    {
+        $months = [];
+        $cursor = now()->startOfMonth()->subMonths(self::MONTHS - 1);
+
+        for ($i = 0; $i < self::MONTHS; $i++) {
+            $months[$cursor->format('Y-m')] = $cursor->format('M Y');
+            $cursor = $cursor->copy()->addMonth();
+        }
+
+        return $months;
+    }
+
+    /**
+     * @param  array<string,string>  $months
+     * @param  \Illuminate\Support\Collection<string,object>  $rows  aggregates keyed by `Y-m`
+     * @return array<int,int>
+     */
+    private function alignToMonths(array $months, $rows, string $column): array
+    {
+        return array_map(
+            fn ($ym) => (int) ($rows->get($ym)->{$column} ?? 0),
+            array_keys($months)
+        );
     }
 }

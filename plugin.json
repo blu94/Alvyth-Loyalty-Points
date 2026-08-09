@@ -2,7 +2,7 @@
   "schema": 1,
   "slug": "loyalty-points",
   "name": "Loyalty Points",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": { "name": "Ovynt Labs" },
   "description": "Reward repeat buyers with points and tiers — a points ledger, per-customer balances, tier standing and programme settings.",
   "icon": "tabler-gift",
@@ -11,7 +11,53 @@
   "licence": { "type": "free" },
   "admin": {
     "modules": ["loyalty-members", "loyalty-transactions", "loyalty-tiers"],
-    "permissions": { "loyalty": ["view", "create", "update", "delete"] }
+    "permissions": { "loyalty": ["view", "create", "update", "delete"] },
+    "navigation": {
+      "title": "Loyalty",
+      "icon": "tabler-award",
+      "order": 40,
+      "children": [
+        {
+          "title": "Overview",
+          "icon": "tabler-chart-pie",
+          "module": "loyalty-members",
+          "to": { "name": "module-type-page-slug", "params": { "slug": "overview" } }
+        },
+        {
+          "title": "Members",
+          "icon": "tabler-users",
+          "module": "loyalty-members",
+          "children": [
+            { "title": "List", "icon": "tabler-list", "module": "loyalty-members", "to": "module-type" },
+            { "title": "Enrol Customer", "icon": "tabler-user-plus", "module": "loyalty-members", "to": "module-type-create" }
+          ]
+        },
+        {
+          "title": "Points Activity",
+          "icon": "tabler-arrows-exchange",
+          "module": "loyalty-transactions",
+          "children": [
+            { "title": "List", "icon": "tabler-list", "module": "loyalty-transactions", "to": "module-type" },
+            { "title": "New Entry", "icon": "tabler-plus", "module": "loyalty-transactions", "to": "module-type-create" }
+          ]
+        },
+        {
+          "title": "Tiers",
+          "icon": "tabler-gift",
+          "module": "loyalty-tiers",
+          "children": [
+            { "title": "List", "icon": "tabler-list", "module": "loyalty-tiers", "to": "module-type" },
+            { "title": "Add Tier", "icon": "tabler-plus", "module": "loyalty-tiers", "to": "module-type-create" }
+          ]
+        },
+        {
+          "title": "Settings",
+          "icon": "tabler-settings",
+          "module": "loyalty-members",
+          "to": { "name": "module-type-page-slug", "params": { "slug": "settings" } }
+        }
+      ]
+    }
   },
   "listeners": {
     "App\\Events\\OrderStatusChanged": ["Backend\\Listeners\\AwardPointsOnPaidOrder"]

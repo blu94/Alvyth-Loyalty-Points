@@ -13,7 +13,7 @@ class LoyaltyTransaction extends Model
 
     protected $table = 'loyalty_transactions';
 
-    protected $fillable = ['member_id', 'points', 'type', 'reason', 'order_id'];
+    protected $fillable = ['member_id', 'points', 'type', 'reason', 'order_id', 'reverses_id'];
 
     protected $casts = [
         'points' => 'integer',
@@ -38,6 +38,18 @@ class LoyaltyTransaction extends Model
      * would fire while `type` may not have been assigned yet — mass assignment applies
      * attributes in payload order — so the rule would depend on key order in a JSON body.
      */
+    /**
+     * The entry this one undoes, if it is a correction.
+     *
+     * What makes a reversal recognisable to `LoyaltyMember::recalculate()` without reading
+     * its reason: restoring a spent redemption must not count as earning, and undoing an
+     * earn must. Only the original can say which of the two this is.
+     */
+    public function reverses()
+    {
+        return $this->belongsTo(self::class, 'reverses_id');
+    }
+
     public static function signedPoints(string $type, mixed $points): int
     {
         $points = (int) $points;

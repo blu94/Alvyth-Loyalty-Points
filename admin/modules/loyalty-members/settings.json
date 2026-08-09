@@ -7,7 +7,7 @@
       "ui": { "type": "row", "dense": false },
       "elements": [
         {
-          "ui": { "type": "field", "cols": 12, "md": 6 },
+          "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
           "key": "points_per_currency",
           "type": "number",
           "label": "Points earned per 1.00 spent",
@@ -17,7 +17,7 @@
           "rules": ["required", "numeric", "min:0"]
         },
         {
-          "ui": { "type": "field", "cols": 12, "md": 6 },
+          "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
           "key": "redeem_value",
           "type": "number",
           "label": "Value of 1 point when redeemed",
@@ -27,7 +27,7 @@
           "rules": ["required", "numeric", "min:0"]
         },
         {
-          "ui": { "type": "field", "cols": 12, "md": 6 },
+          "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
           "key": "minimum_redemption",
           "type": "number",
           "label": "Minimum points before redeeming",
@@ -37,7 +37,7 @@
           "rules": ["required", "integer", "min:0"]
         },
         {
-          "ui": { "type": "field", "cols": 12, "md": 6 },
+          "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
           "key": "expiry_months",
           "type": "number",
           "label": "Points expire after (months)",

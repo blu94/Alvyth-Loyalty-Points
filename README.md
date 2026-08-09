@@ -49,19 +49,51 @@ in either direction is exactly what it is for.
 Editing a tier's threshold re-ranks every member, so the standings on screen always match the
 rules currently in force.
 
-## Points are issued by an operator, not automatically
+## The programme runs itself
 
-**This plugin cannot award points at checkout.** The Ovynt plugin system lets a plugin
-register an autoloader and permissions — it has no hook for event listeners or service
-providers (see `PLUGIN-SYSTEM-SPEC.md`, "deliberately deferred"). Nothing a plugin ships can
-observe an order being paid.
+Four listeners do the work; an operator only intervenes to correct something.
 
-So points are posted under **Points Activity**, by hand or by whatever you build against the
-API. The same applies to **expiry**: the setting records your policy and is there for a
-future integration to read, but no scheduled job in this package acts on it.
+| When | What happens |
+|---|---|
+| An order becomes **paid** | The customer is enrolled if new, and an `earn` entry is written at your rate |
+| A customer **spends points at checkout** | The order is priced with the reduction, and the `redeem` entry is written **on payment** |
+| A paid order is **refunded** | Both entries are reversed with mirrored entries that point at what they undo |
 
-`points_per_currency` and `redeem_value` exist for the same reason — they are the programme's
-published rates, ready for the moment core can call into a plugin.
+**Points are awarded on payment, not on placement.** An abandoned checkout or an unpaid
+invoice would otherwise mint value you had to claw back.
+
+**Points are deducted on payment too, not when the order is priced.** Redemption is quoted
+while the customer is still deciding and may be followed by a gateway failure; debiting then
+and refunding on failure would invent a reversal path for the common case rather than the rare
+one. Until the order is paid, an abandoned checkout costs the customer nothing.
+
+### Spending points
+
+The plugin renders a points box into the storefront's `checkout` slot — one number input
+carrying `data-checkout-field="loyalty_points"`. The theme carries the value to the server and
+`RedeemPointsAtCheckout` reads it back through `CheckoutAdjusting::field()`. The plugin ships
+**no JavaScript**; a theme that renders the slot gets a working control.
+
+It proposes an amount and core decides. Never more than the customer holds, never more than
+the order is worth, and never below your minimum — and when the order is smaller than the
+points offered, only the points actually used are charged. Asking to spend 999,999 points on a
+5.00 order takes 5.00 off and costs 500 points, not the balance.
+
+A **suspended** member keeps their balance and stops spending it, checked in the listener and
+not only in the UI. A guest sees no box.
+
+### Why a refund cannot promote someone
+
+Reversal entries carry `reverses_id`, a self-reference to the entry they undo. `lifetime_points`
+sums earn and adjust entries that are *not* reversals, plus reversals whose target **was** an
+earn — so reversing a redemption does not read as earning. A plain `SUM(points > 0)` was wrong
+in both directions and let a refund raise someone into a higher tier. Tier standing must not
+depend on a reason string, which is why this is a column and not prose matching.
+
+### Not automatic
+
+**Expiry.** `expiry_months` records your policy and nothing acts on it — no job in this
+package writes `expire` entries.
 
 ## Structure
 
@@ -76,11 +108,25 @@ admin/modules/
     module.json  index.json  form.json
   loyalty-tiers/                              the tier ladder
     module.json  index.json  form.json
+admin/sections/
+  PointsBadge.json                            page-builder section schema
 backend/
   Models/         LoyaltyMember · LoyaltyTransaction · LoyaltyTier · LoyaltySetting
   Repositories/   one per module — baseIndexQuery/create/find/update/delete/getOptions
-  migrations/     four tables
+  Listeners/      AwardPointsOnPaidOrder · SpendPointsOnPaidOrder
+                  ReversePointsOnRefundedOrder · RedeemPointsAtCheckout
+  Support/        CurrentCustomer · PointsBadge · RedeemBox — storefront rendering
+  migrations/     four tables, plus reverses_id
+frontend/blade/
+  badge.blade.php  redeem.blade.php            the two customer-facing blocks
+  slots/          account.blade.php · checkout.blade.php
+  partials/sections/general/PointsBadgePlugin/index.php
 ```
+
+`Support/` holds what both a page-builder section and a slot need, because the section render
+class lives outside the plugin autoloader's reach and only exists while a section is drawing.
+Keeping the work in `Support/` is what lets the same badge appear in a builder block and in the
+`account` slot without two implementations.
 
 ### Things that must be exact
 
@@ -103,6 +149,29 @@ A page needs three things: a top-level key in `module.json` matching its slug, a
 entry pointing at `module-type-page-slug`, and a `pageData($slug)` method on the repository.
 Add `savePageData($slug, $data)` and a `"action": "save"` button to make it writable — that is
 how **Settings** works.
+
+## Tests
+
+`tests/` ships with the package. There is no separate harness: the plugin's classes only
+exist once Ovynt has installed and enabled it, so the tests run **inside a container, against
+the installed copy**, using the host application's PHPUnit and its `ovynt_test` isolation.
+
+```bash
+# Install into the test database (creates the four tables)
+docker exec -e DB_DATABASE=ovynt_test ovynt_app \
+  php artisan plugin:import /var/www/storage/app/plugin-src-tmp/loyalty-points --enable
+
+# Run them
+docker exec ovynt_app php vendor/bin/phpunit \
+  storage/app/plugins/loyalty-points/tests --no-coverage
+```
+
+They cover the ledger rules — what `recalculate()` does to balance, lifetime and tier across
+earn, redeem, expiry, adjustment and refund — and the checkout listener's clamping. Reinstall
+after editing a test; the installed copy is what runs.
+
+Two rules from `.agent/skills/laravel-testing.md` apply unchanged: **`DatabaseTransactions`,
+never `RefreshDatabase`**, and never run two suites at once — these do DDL on `ovynt_test`.
 
 ## Requirements
 

@@ -2,16 +2,139 @@
   "schema": 1,
   "slug": "loyalty-points",
   "name": "Loyalty Points",
-  "version": "1.1.0",
-  "author": { "name": "Ovynt Labs" },
+  "version": "1.6.0",
+  "author": {
+    "name": "Ovynt Labs"
+  },
   "description": "Reward repeat buyers with points and tiers — a points ledger, per-customer balances, tier standing and programme settings.",
+  "long_description": "Loyalty Points turns repeat custom into a programme you can actually run from the admin, rather than a spreadsheet somebody maintains on the side. It gives your store three things: a ledger of every point ever issued or spent, a balance and standing for each customer, and a tier ladder you define.\n\nThe ledger is the heart of it. Every earn, redemption, manual adjustment and expiry is one entry, with a reason and — where it applies — the order it came from. Nothing is ever silently recalculated behind your back: a customer's balance is the sum of their entries, recomputed after every write, so what the screen shows and what the ledger says cannot drift apart. If you correct a mistake, the correction is itself an entry, and the history stays honest.\n\nEach member carries two numbers, deliberately. Their balance is what they can still spend, and it falls when they redeem. Their lifetime points count what they have ever earned and never fall. Tiers key off lifetime, so cashing in a reward never demotes somebody who has been loyal for years — which is the whole point of a programme like this.\n\nPoints are awarded automatically when an order is paid, not when it is placed, so an abandoned checkout or an unpaid invoice never mints value you would have to claw back. The rate is yours to set, as is what a point is worth when redeemed, the minimum before anyone can spend, and how long points last.\n\nThe Overview answers the questions an owner actually asks: how many points are outstanding, what they would cost if everyone redeemed tomorrow, who is in which tier, and how the programme is growing. Members, activity and tiers each have their own screen, and every figure traces back to the ledger.",
   "icon": "tabler-gift",
-  "requires": { "ovynt": ">=1.2.0 <2.0.0" },
-  "reach": ["admin"],
-  "licence": { "type": "free" },
+  "banner": "assets/banner.png",
+  "thumbnail": "assets/thumbnail.png",
+  "requires": {
+    "ovynt": ">=1.2.0 <2.0.0"
+  },
+  "reach": [
+    "admin",
+    "storefront"
+  ],
+  "licence": {
+    "type": "free"
+  },
   "admin": {
-    "modules": ["loyalty-members", "loyalty-transactions", "loyalty-tiers"],
-    "permissions": { "loyalty": ["view", "create", "update", "delete"] }
+    "modules": [
+      "loyalty-members",
+      "loyalty-transactions",
+      "loyalty-tiers"
+    ],
+    "permissions": {
+      "loyalty": [
+        "view",
+        "create",
+        "update",
+        "delete"
+      ]
+    },
+    "navigation": {
+      "title": "Loyalty",
+      "icon": "tabler-award",
+      "order": 40,
+      "children": [
+        {
+          "title": "Overview",
+          "icon": "tabler-chart-pie",
+          "module": "loyalty-members",
+          "to": {
+            "name": "module-type-page-slug",
+            "params": {
+              "slug": "overview"
+            }
+          }
+        },
+        {
+          "title": "Members",
+          "icon": "tabler-users",
+          "module": "loyalty-members",
+          "children": [
+            {
+              "title": "List",
+              "icon": "tabler-list",
+              "module": "loyalty-members",
+              "to": "module-type"
+            },
+            {
+              "title": "Enrol Customer",
+              "icon": "tabler-user-plus",
+              "module": "loyalty-members",
+              "to": "module-type-create"
+            }
+          ]
+        },
+        {
+          "title": "Points Activity",
+          "icon": "tabler-arrows-exchange",
+          "module": "loyalty-transactions",
+          "children": [
+            {
+              "title": "List",
+              "icon": "tabler-list",
+              "module": "loyalty-transactions",
+              "to": "module-type"
+            },
+            {
+              "title": "New Entry",
+              "icon": "tabler-plus",
+              "module": "loyalty-transactions",
+              "to": "module-type-create"
+            }
+          ]
+        },
+        {
+          "title": "Tiers",
+          "icon": "tabler-gift",
+          "module": "loyalty-tiers",
+          "children": [
+            {
+              "title": "List",
+              "icon": "tabler-list",
+              "module": "loyalty-tiers",
+              "to": "module-type"
+            },
+            {
+              "title": "Add Tier",
+              "icon": "tabler-plus",
+              "module": "loyalty-tiers",
+              "to": "module-type-create"
+            }
+          ]
+        },
+        {
+          "title": "Settings",
+          "icon": "tabler-settings",
+          "module": "loyalty-members",
+          "to": {
+            "name": "module-type-page-slug",
+            "params": {
+              "slug": "settings"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "storefront": {
+    "views": "frontend/blade",
+    "sections": "admin/sections"
+  },
+  "listeners": {
+    "App\\Events\\OrderStatusChanged": [
+      "Backend\\Listeners\\AwardPointsOnPaidOrder",
+      "Backend\\Listeners\\SpendPointsOnPaidOrder",
+      "Backend\\Listeners\\ReversePointsOnRefundedOrder"
+    ],
+    "App\\Events\\CheckoutAdjusting": [
+      "Backend\\Listeners\\RedeemPointsAtCheckout"
+    ]
   },
   "migrations": "backend/migrations",
   "uninstall": {

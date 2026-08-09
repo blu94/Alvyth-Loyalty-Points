@@ -1,0 +1,49 @@
+{
+  "type": "POINTS_BADGE_SECTION",
+  "name": "Loyalty Points Badge",
+  "description": "Shows the signed-in customer their points balance, tier and progress to the next tier. Renders nothing for a guest.",
+  "contents": {
+    "elements": [
+      {
+        "ui": { "type": "field", "cols": 12 },
+        "key": "heading",
+        "type": "text",
+        "label": "Heading",
+        "placeholder": "Your points",
+        "default": "Your points"
+      },
+      {
+        "ui": { "type": "field", "cols": 12 },
+        "key": "subheading",
+        "type": "text",
+        "label": "Sub-heading",
+        "placeholder": "Earned on every order you pay for.",
+        "default": "Earned on every order you pay for."
+      },
+      {
+        "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
+        "key": "show_value",
+        "type": "switch",
+        "label": "Show what the points are worth",
+        "hint": "Values the balance using the redeem rate from Loyalty → Settings.",
+        "default": true
+      },
+      {
+        "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
+        "key": "show_progress",
+        "type": "switch",
+        "label": "Show progress to the next tier",
+        "default": true
+      },
+      {
+        "ui": { "type": "field", "cols": 12 },
+        "key": "empty_text",
+        "type": "text",
+        "label": "Text for a customer with no points yet",
+        "placeholder": "Start shopping to earn your first points.",
+        "default": "Start shopping to earn your first points."
+      }
+    ]
+  },
+  "settings": { "elements": [] }
+}

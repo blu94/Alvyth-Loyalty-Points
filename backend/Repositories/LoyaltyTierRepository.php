@@ -79,7 +79,12 @@ class LoyaltyTierRepository
      */
     private function restandMembers(): void
     {
-        LoyaltyMember::query()->with('transactions')->chunkById(200, function ($members) {
+        // No `with('transactions')`. `recalculate()` aggregates in SQL through
+        // `$this->transactions()->sum(...)`, which is a fresh query and never touches an
+        // eager-loaded relation — so loading them pulled every entry for every member into
+        // memory to be thrown away. On a shop with a real ledger that is how this runs out
+        // of memory, and it bought nothing even when it fitted.
+        LoyaltyMember::query()->chunkById(200, function ($members) {
             foreach ($members as $member) {
                 $member->recalculate();
             }

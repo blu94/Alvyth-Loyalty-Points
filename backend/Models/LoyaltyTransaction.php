@@ -25,6 +25,18 @@ class LoyaltyTransaction extends Model
     }
 
     /**
+     * The entry this one undoes, if it is a correction.
+     *
+     * What makes a reversal recognisable to `LoyaltyMember::recalculate()` without reading
+     * its reason: restoring a spent redemption must not count as earning, and undoing an
+     * earn must. Only the original can say which of the two this is.
+     */
+    public function reverses()
+    {
+        return $this->belongsTo(self::class, 'reverses_id');
+    }
+
+    /**
      * The signed value to store for a typed entry.
      *
      * An operator typing "100" against **Redeem** means "take 100 away" — nobody types a
@@ -37,19 +49,12 @@ class LoyaltyTransaction extends Model
      * A static taking both values rather than a `setPointsAttribute` mutator: a mutator
      * would fire while `type` may not have been assigned yet — mass assignment applies
      * attributes in payload order — so the rule would depend on key order in a JSON body.
-     */
-    /**
-     * The entry this one undoes, if it is a correction.
      *
-     * What makes a reversal recognisable to `LoyaltyMember::recalculate()` without reading
-     * its reason: restoring a spent redemption must not count as earning, and undoing an
-     * earn must. Only the original can say which of the two this is.
+     * **Applied by the repository, not by the model.** Writing through
+     * `LoyaltyTransaction::create()` stores exactly what it is given, so a listener building
+     * an entry by hand has to call this itself — passing a positive number with
+     * `type = redeem` would raise the balance it meant to lower.
      */
-    public function reverses()
-    {
-        return $this->belongsTo(self::class, 'reverses_id');
-    }
-
     public static function signedPoints(string $type, mixed $points): int
     {
         $points = (int) $points;

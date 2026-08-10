@@ -90,10 +90,25 @@ earn — so reversing a redemption does not read as earning. A plain `SUM(points
 in both directions and let a refund raise someone into a higher tier. Tier standing must not
 depend on a reason string, which is why this is a column and not prose matching.
 
-### Not automatic
+### Expiry — your policy, applied when you press the button
 
-**Expiry.** `expiry_months` records your policy and nothing acts on it — no job in this
-package writes `expire` entries.
+`expiry_months` sets how long points last. **Loyalty → Settings → Expire old points now**
+applies it: every member holding points older than the window gets an `expire` entry and a
+recalculated balance.
+
+**Run by hand, not on a schedule.** A plugin registers no service provider and no console
+command, so there is nowhere for this package to hang a cron entry. Rather than a setting
+that silently does nothing, it is a button that says what it did — "Expired 12,400 points
+across 38 members". If you want it monthly, call the endpoint from your host's cron.
+
+**Oldest points go first.** There is no per-batch ledger and none is needed: everything
+credited before the cutoff, minus everything ever spent, is by definition old *and* unspent.
+A customer who earned 400 points last year, 600 this year and has already redeemed 400 loses
+nothing — the redemption is treated as having used the old ones.
+
+Expiry takes balance, never standing. `lifetime_points` counts what was earned, so nobody
+drops a tier for not spending quickly enough. Running it twice does nothing the second time,
+because the expiry entry is itself a debit the next pass sees.
 
 ## Structure
 
@@ -115,6 +130,7 @@ backend/
   Repositories/   one per module — baseIndexQuery/create/find/update/delete/getOptions
   Listeners/      AwardPointsOnPaidOrder · SpendPointsOnPaidOrder
                   ReversePointsOnRefundedOrder · RedeemPointsAtCheckout
+  Services/       PointsExpiry — the expiry rule, testable without a screen
   Support/        CurrentCustomer · PointsBadge · RedeemBox — storefront rendering
   migrations/     four tables, plus reverses_id
 frontend/blade/
@@ -148,7 +164,16 @@ confusing, so they are worth stating:
 A page needs three things: a top-level key in `module.json` matching its slug, a `navigation`
 entry pointing at `module-type-page-slug`, and a `pageData($slug)` method on the repository.
 Add `savePageData($slug, $data)` and a `"action": "save"` button to make it writable — that is
-how **Settings** works.
+how **Settings** works. A button that is not a save posts to
+`/admin/modules/{type}/page/{slug}` with `"action": "request"`, and `savePageData()` branches
+on the slug — that is how **Expire old points now** works, because a plugin registers no
+routes of its own.
+
+**Every page file here is a JSON array of sections**, including single-section pages. Both
+shapes render, and this package shipped one of each until they were reconciled. The array
+wins because `create-plugin.md` forbids nesting a section inside a section, so a page with
+several sections has nowhere to put them but the top level — and a page that grows a second
+section should not have to change shape to get one.
 
 ## Tests
 

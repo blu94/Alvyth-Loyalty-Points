@@ -7,6 +7,7 @@ use Plugin\LoyaltyPoints\Backend\Models\LoyaltyMember;
 use Plugin\LoyaltyPoints\Backend\Models\LoyaltySetting;
 use Plugin\LoyaltyPoints\Backend\Models\LoyaltyTier;
 use Plugin\LoyaltyPoints\Backend\Models\LoyaltyTransaction;
+use Plugin\LoyaltyPoints\Backend\Services\PointsExpiry;
 
 /**
  * Members — who is in the programme and what they are worth.
@@ -109,6 +110,12 @@ class LoyaltyMemberRepository
      */
     public function savePageData(string $slug, array $data): array
     {
+        // A plugin registers no routes, so `POST /admin/modules/{type}/page/{slug}` is the
+        // only way a schema-declared button reaches the server. Each slug is one button.
+        if ($slug === 'expire') {
+            return $this->runExpiry();
+        }
+
         if ($slug !== 'settings') {
             return [];
         }
@@ -127,6 +134,35 @@ class LoyaltyMemberRepository
         ]);
 
         return $settings->fresh()->toArray();
+    }
+
+    /**
+     * Retire points older than the programme's window, on demand.
+     *
+     * Returns a sentence rather than a count on its own: an operator pressing this needs to
+     * know whether it did nothing because nothing was due, or because no policy is set. Those
+     * look identical from a zero.
+     *
+     * @return array<string,mixed>
+     */
+    private function runExpiry(): array
+    {
+        $result = app(PointsExpiry::class)->run();
+
+        if ($result['months'] === null) {
+            return $result + ['message' => 'No expiry window is set, so no points expire. Set one in Settings first.'];
+        }
+
+        if ($result['expired_points'] === 0) {
+            return $result + ['message' => 'Nothing to expire — no points are older than ' . $result['months'] . ' months.'];
+        }
+
+        return $result + ['message' => sprintf(
+            'Expired %s points across %d %s.',
+            number_format($result['expired_points']),
+            $result['expired_members'],
+            $result['expired_members'] === 1 ? 'member' : 'members'
+        )];
     }
 
     /**

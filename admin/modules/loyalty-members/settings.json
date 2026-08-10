@@ -1,61 +1,154 @@
-{
-  "ui": { "type": "section", "icon": "tabler-settings", "class": "pa-5" },
-  "name": "Programme Settings",
-  "subtitle": "The rules the programme runs on. These are read by anything that issues or redeems points.",
-  "elements": [
-    {
-      "ui": { "type": "row", "dense": false },
-      "elements": [
-        {
-          "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
-          "key": "points_per_currency",
-          "type": "number",
-          "label": "Points earned per 1.00 spent",
-          "placeholder": "e.g. 1",
-          "hint": "A rate of 1 gives a customer 250 points for a 250.00 order.",
-          "default": 1,
-          "rules": ["required", "numeric", "min:0"]
-        },
-        {
-          "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
-          "key": "redeem_value",
-          "type": "number",
-          "label": "Value of 1 point when redeemed",
-          "placeholder": "e.g. 0.01",
-          "hint": "Used to value the outstanding balance on the Overview.",
-          "default": 0.01,
-          "rules": ["required", "numeric", "min:0"]
-        },
-        {
-          "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
-          "key": "minimum_redemption",
-          "type": "number",
-          "label": "Minimum points before redeeming",
-          "placeholder": "e.g. 500",
-          "hint": "0 means a customer may redeem any amount.",
-          "default": 0,
-          "rules": ["required", "integer", "min:0"]
-        },
-        {
-          "ui": { "type": "field", "cols": { "cols": 12, "md": 6 } },
-          "key": "expiry_months",
-          "type": "number",
-          "label": "Points expire after (months)",
-          "placeholder": "Leave empty for never",
-          "hint": "Expiry is not applied automatically — see the README.",
-          "rules": ["nullable", "integer", "min:0"]
-        }
-      ]
+[
+  {
+    "ui": {
+      "type": "section",
+      "icon": "tabler-settings",
+      "class": "pa-5"
     },
-    {
-      "ui": { "type": "row", "dense": true },
-      "elements": [
-        {
-          "ui": { "type": "button", "color": "primary", "icon": "tabler-checkbox" },
-          "action": "save",
-          "label": "Save Settings"
-        }
-      ]
-    }
-  ]
-}
+    "name": "Programme Settings",
+    "subtitle": "The rules the programme runs on. These are read by anything that issues or redeems points.",
+    "elements": [
+      {
+        "ui": {
+          "type": "row",
+          "dense": false
+        },
+        "elements": [
+          {
+            "ui": {
+              "type": "field",
+              "cols": {
+                "cols": 12,
+                "md": 6
+              }
+            },
+            "key": "points_per_currency",
+            "type": "number",
+            "label": "Points earned per 1.00 spent",
+            "placeholder": "e.g. 1",
+            "hint": "A rate of 1 gives a customer 250 points for a 250.00 order.",
+            "default": 1,
+            "rules": [
+              "required",
+              "numeric",
+              "min:0"
+            ]
+          },
+          {
+            "ui": {
+              "type": "field",
+              "cols": {
+                "cols": 12,
+                "md": 6
+              }
+            },
+            "key": "redeem_value",
+            "type": "number",
+            "label": "Value of 1 point when redeemed",
+            "placeholder": "e.g. 0.01",
+            "hint": "Used to value the outstanding balance on the Overview.",
+            "default": 0.01,
+            "rules": [
+              "required",
+              "numeric",
+              "min:0"
+            ]
+          },
+          {
+            "ui": {
+              "type": "field",
+              "cols": {
+                "cols": 12,
+                "md": 6
+              }
+            },
+            "key": "minimum_redemption",
+            "type": "number",
+            "label": "Minimum points before redeeming",
+            "placeholder": "e.g. 500",
+            "hint": "0 means a customer may redeem any amount.",
+            "default": 0,
+            "rules": [
+              "required",
+              "integer",
+              "min:0"
+            ]
+          },
+          {
+            "ui": {
+              "type": "field",
+              "cols": {
+                "cols": 12,
+                "md": 6
+              }
+            },
+            "key": "expiry_months",
+            "type": "number",
+            "label": "Points expire after (months)",
+            "placeholder": "Leave empty for never",
+            "hint": "Expiry is not applied automatically — see the README.",
+            "rules": [
+              "nullable",
+              "integer",
+              "min:0"
+            ]
+          }
+        ]
+      },
+      {
+        "ui": {
+          "type": "row",
+          "dense": true
+        },
+        "elements": [
+          {
+            "ui": {
+              "type": "button",
+              "color": "primary",
+              "icon": "tabler-checkbox"
+            },
+            "action": "save",
+            "label": "Save Settings"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ui": {
+      "type": "section",
+      "icon": "tabler-clock-off",
+      "cols": 12
+    },
+    "name": "Points expiry",
+    "subtitle": "Run when you choose. A plugin cannot schedule work, so nothing expires on its own — the window above is the policy, this is what applies it.",
+    "elements": [
+      {
+        "ui": {
+          "type": "row"
+        },
+        "elements": [
+          {
+            "key": "expire",
+            "ui": {
+              "type": "button",
+              "icon": "tabler-clock-off",
+              "color": "secondary",
+              "variant": "tonal",
+              "rounded": "md"
+            },
+            "label": "Expire old points now",
+            "tooltip": "Write an expiry entry for every member holding points older than the window above",
+            "action": "request",
+            "method": "POST",
+            "api": "/admin/modules/loyalty-members/page/expire",
+            "params": {
+              "confirm": true,
+              "confirmText": "Expire points older than the window set above? This writes an expiry entry against each affected member and lowers their balance. It cannot be undone except by a manual adjustment."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

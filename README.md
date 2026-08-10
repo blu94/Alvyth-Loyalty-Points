@@ -92,9 +92,15 @@ depend on a reason string, which is why this is a column and not prose matching.
 
 ### Expiry — your policy, applied when you press the button
 
-`expiry_months` sets how long points last. **Loyalty → Settings → Expire old points now**
-applies it: every member holding points older than the window gets an `expire` entry and a
-recalculated balance.
+`expiry_months` sets how long points last, in **Settings**. **Points Activity → Expire Old
+Points** applies it: every member holding points older than the window gets an `expire` entry
+and a recalculated balance.
+
+The button lives on Points Activity rather than beside the setting, for two reasons. It writes
+ledger rows, and that screen is the ledger — you press it and watch the entries appear. And a
+custom page's renderer supports only a `save` action, with no confirmation step; the list
+toolbar is where `"action": "request"` and its confirm dialog actually work. An irreversible
+bulk write needs the confirmation more than it needs to sit next to its setting.
 
 **Run by hand, not on a schedule.** A plugin registers no service provider and no console
 command, so there is nowhere for this package to hang a cron entry. Rather than a setting

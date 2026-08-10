@@ -4,14 +4,43 @@
     "elements": [
       {
         "key": "reload",
-        "ui": { "type": "button", "icon": "tabler-refresh", "color": "success", "rounded": true },
+        "ui": {
+          "type": "button",
+          "icon": "tabler-refresh",
+          "color": "success",
+          "rounded": true
+        },
         "tooltip": "Refresh List",
         "action": "reload",
         "class": "ms-2"
       },
       {
+        "key": "expire",
+        "ui": {
+          "type": "button",
+          "icon": "tabler-clock-off",
+          "color": "secondary",
+          "variant": "tonal",
+          "rounded": "md"
+        },
+        "label": "Expire Old Points",
+        "tooltip": "Write an expiry entry for every member holding points older than the window set in Settings",
+        "action": "request",
+        "method": "POST",
+        "api": "/admin/modules/loyalty-members/page/expire",
+        "params": {
+          "confirm": true,
+          "confirmText": "Expire points older than the window set in Settings? This writes an expiry entry against each affected member and lowers their balance. It cannot be undone except by a manual adjustment."
+        }
+      },
+      {
         "key": "create",
-        "ui": { "type": "button", "icon": "tabler-plus", "color": "primary", "rounded": "md" },
+        "ui": {
+          "type": "button",
+          "icon": "tabler-plus",
+          "color": "primary",
+          "rounded": "md"
+        },
         "label": "New Entry",
         "tooltip": "Award, redeem or adjust a member's points",
         "action": "navigate",
@@ -22,7 +51,9 @@
   "filters": {
     "elements": [
       {
-        "ui": { "type": "field" },
+        "ui": {
+          "type": "field"
+        },
         "key": "type",
         "label": "Type",
         "placeholder": "Any type",
@@ -36,28 +67,36 @@
   },
   "elements": [
     {
-      "ui": { "type": "display" },
+      "ui": {
+        "type": "display"
+      },
       "label": "ID",
       "key": "id",
       "sortable": true,
       "width": "60px"
     },
     {
-      "ui": { "type": "display" },
+      "ui": {
+        "type": "display"
+      },
       "label": "Member",
       "key": "member.user.name",
       "sortable": false,
       "searchable": true
     },
     {
-      "ui": { "type": "display" },
+      "ui": {
+        "type": "display"
+      },
       "label": "Points",
       "key": "points",
       "sortable": true,
       "align": "end"
     },
     {
-      "ui": { "type": "display" },
+      "ui": {
+        "type": "display"
+      },
       "label": "Type",
       "key": "type",
       "sortable": true,
@@ -65,21 +104,27 @@
       "type": "status"
     },
     {
-      "ui": { "type": "display" },
+      "ui": {
+        "type": "display"
+      },
       "label": "Reason",
       "key": "reason",
       "sortable": false,
       "searchable": true
     },
     {
-      "ui": { "type": "display" },
+      "ui": {
+        "type": "display"
+      },
       "label": "Order",
       "key": "order_id",
       "sortable": true,
       "align": "center"
     },
     {
-      "ui": { "type": "display" },
+      "ui": {
+        "type": "display"
+      },
       "label": "Recorded",
       "key": "created_at",
       "sortable": true,
@@ -93,7 +138,12 @@
       {
         "key": "delete",
         "action": "delete",
-        "ui": { "type": "button", "icon": "tabler-trash", "color": "error", "rounded": true },
+        "ui": {
+          "type": "button",
+          "icon": "tabler-trash",
+          "color": "error",
+          "rounded": true
+        },
         "params": {
           "confirm": true,
           "confirmText": "Delete this ledger entry? The member's balance will be recalculated without it."

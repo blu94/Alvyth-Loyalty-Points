@@ -86,12 +86,13 @@
             "type": "number",
             "label": "Points expire after (months)",
             "placeholder": "Leave empty for never",
-            "hint": "Expiry is not applied automatically — see the README.",
+            "hint": "Points older than this can be retired from Points Activity → Expire Old Points. Nothing expires on its own — a plugin cannot schedule work.",
             "rules": [
               "nullable",
               "integer",
               "min:0"
-            ]
+            ],
+            "persistentHint": true
           }
         ]
       },
@@ -109,43 +110,6 @@
             },
             "action": "save",
             "label": "Save Settings"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "ui": {
-      "type": "section",
-      "icon": "tabler-clock-off",
-      "cols": 12
-    },
-    "name": "Points expiry",
-    "subtitle": "Run when you choose. A plugin cannot schedule work, so nothing expires on its own — the window above is the policy, this is what applies it.",
-    "elements": [
-      {
-        "ui": {
-          "type": "row"
-        },
-        "elements": [
-          {
-            "key": "expire",
-            "ui": {
-              "type": "button",
-              "icon": "tabler-clock-off",
-              "color": "secondary",
-              "variant": "tonal",
-              "rounded": "md"
-            },
-            "label": "Expire old points now",
-            "tooltip": "Write an expiry entry for every member holding points older than the window above",
-            "action": "request",
-            "method": "POST",
-            "api": "/admin/modules/loyalty-members/page/expire",
-            "params": {
-              "confirm": true,
-              "confirmText": "Expire points older than the window set above? This writes an expiry entry against each affected member and lowers their balance. It cannot be undone except by a manual adjustment."
-            }
           }
         ]
       }

@@ -175,8 +175,49 @@ class LoyaltyMemberRepository
      */
     private function overview(): array
     {
-        $issued   = (int) LoyaltyTransaction::where('points', '>', 0)->sum('points');
-        $redeemed = (int) abs((int) LoyaltyTransaction::where('points', '<', 0)->sum('points'));
+        // Counted by what an entry *means*, not by its sign.
+        //
+        // "Every positive" and "every negative" is the obvious split and it told two lies. A
+        // refund writes a positive mirror of the redemption it undoes, which read as the shop
+        // issuing more points; and expiry is negative, so points nobody ever spent were
+        // reported as redeemed. Both nets came out right, which is exactly why neither was
+        // visible: only the three figures separately were wrong.
+        //
+        // `points_issued` uses the same rule as `lifetime_points` — earn, the operator's own
+        // adjustments, and corrections to earnings — so the headline figure and every
+        // member's standing are computed from one definition of "earned".
+        $issued = (int) LoyaltyTransaction::query()
+            ->where(function ($outer) {
+                $outer
+                    ->where(fn ($q) => $q
+                        ->whereIn('type', [LoyaltyTransaction::TYPE_EARN, LoyaltyTransaction::TYPE_ADJUST])
+                        ->whereNull('reverses_id'))
+                    ->orWhere(fn ($q) => $q
+                        ->whereNotNull('reverses_id')
+                        ->whereHas('reverses', fn ($r) => $r->where('type', LoyaltyTransaction::TYPE_EARN)));
+            })
+            ->sum('points');
+
+        // Spending, and the undoing of spending. A refunded redemption is not a redemption.
+        $redeemed = -(int) LoyaltyTransaction::query()
+            ->where(function ($outer) {
+                $outer
+                    ->where('type', LoyaltyTransaction::TYPE_REDEEM)
+                    ->orWhere(fn ($q) => $q
+                        ->whereNotNull('reverses_id')
+                        ->whereHas('reverses', fn ($r) => $r->where('type', LoyaltyTransaction::TYPE_REDEEM)));
+            })
+            ->sum('points');
+
+        // Its own figure now that expiry actually runs. Lumping it into redemptions told the
+        // operator customers had spent points that in fact ran out unused — the opposite
+        // conclusion about how well the programme is working.
+        $expired = -(int) LoyaltyTransaction::where('type', LoyaltyTransaction::TYPE_EXPIRE)->sum('points');
+
+        // Issued less spent less expired. Every entry belongs to exactly one of the three, so
+        // this still equals the sum of the whole ledger — the tiles add up on screen and the
+        // total agrees with every member's balance.
+        $outstanding = $issued - $redeemed - $expired;
 
         $settings = LoyaltySetting::current();
 
@@ -185,12 +226,13 @@ class LoyaltyMemberRepository
             'members_active'    => LoyaltyMember::where('status', 'active')->count(),
             'points_issued'     => $issued,
             'points_redeemed'   => $redeemed,
-            'points_outstanding' => $issued - $redeemed,
+            'points_expired'    => $expired,
+            'points_outstanding' => $outstanding,
 
             // What the outstanding balance would cost the shop if every customer redeemed
             // tomorrow. This is the number a finance team asks for, and it is why
             // `redeem_value` is a setting rather than a hard-coded rate.
-            'liability'         => number_format(($issued - $redeemed) * (float) $settings->redeem_value, 2),
+            'liability'         => number_format($outstanding * (float) $settings->redeem_value, 2),
 
             'unenrolled_customers' => DB::table('users')
                 ->whereNotIn('id', LoyaltyMember::query()->select('user_id'))

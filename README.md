@@ -22,7 +22,7 @@ Removing the plugin keeps its data by default, so reinstalling restores everythi
 
 | Screen | What it is for |
 |---|---|
-| **Loyalty → Overview** | Points issued, redeemed, outstanding, and what the outstanding balance is worth |
+| **Loyalty → Overview** | Points issued, redeemed, expired, outstanding, and what the outstanding balance is worth |
 | **Loyalty → Members** | Every enrolled customer: balance, lifetime points, tier |
 | **Loyalty → Settings** | Earn rate, point value, minimum redemption, expiry window |
 | **Points Activity** | The ledger — every earn, redemption, adjustment and expiry |

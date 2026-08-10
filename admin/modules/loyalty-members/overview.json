@@ -1,47 +1,129 @@
 [
   {
-    "ui": { "type": "section", "icon": "tabler-coins", "cols": 12 },
+    "ui": {
+      "type": "section",
+      "icon": "tabler-coins",
+      "cols": 12
+    },
     "name": "The programme at a glance",
     "subtitle": "Outstanding is what customers can still spend — and what the shop still owes them.",
     "elements": [
       {
-        "ui": { "type": "field", "cols": { "cols": 12, "sm": 6, "md": 3 }, "icon": "tabler-coins", "color": "primary" },
+        "ui": {
+          "type": "field",
+          "cols": {
+            "cols": 12,
+            "sm": 6,
+            "md": 3
+          },
+          "icon": "tabler-coins",
+          "color": "primary"
+        },
         "type": "display",
         "key": "points_issued",
         "label": "Points issued"
       },
       {
-        "ui": { "type": "field", "cols": { "cols": 12, "sm": 6, "md": 3 }, "icon": "tabler-gift", "color": "success" },
+        "ui": {
+          "type": "field",
+          "cols": {
+            "cols": 12,
+            "sm": 6,
+            "md": 3
+          },
+          "icon": "tabler-gift",
+          "color": "success"
+        },
         "type": "display",
         "key": "points_redeemed",
         "label": "Points redeemed"
       },
       {
-        "ui": { "type": "field", "cols": { "cols": 12, "sm": 6, "md": 3 }, "icon": "tabler-wallet", "color": "warning" },
+        "ui": {
+          "type": "field",
+          "cols": {
+            "cols": 12,
+            "sm": 6,
+            "md": 3
+          },
+          "icon": "tabler-clock-off",
+          "color": "secondary"
+        },
+        "type": "display",
+        "key": "points_expired",
+        "label": "Points expired"
+      },
+      {
+        "ui": {
+          "type": "field",
+          "cols": {
+            "cols": 12,
+            "sm": 6,
+            "md": 3
+          },
+          "icon": "tabler-wallet",
+          "color": "warning"
+        },
         "type": "display",
         "key": "points_outstanding",
         "label": "Outstanding"
       },
       {
-        "ui": { "type": "field", "cols": { "cols": 12, "sm": 6, "md": 3 }, "icon": "tabler-report-money", "color": "info" },
+        "ui": {
+          "type": "field",
+          "cols": {
+            "cols": 12,
+            "sm": 6,
+            "md": 3
+          },
+          "icon": "tabler-report-money",
+          "color": "info"
+        },
         "type": "display",
         "key": "liability",
         "label": "Outstanding value"
       },
       {
-        "ui": { "type": "field", "cols": { "cols": 12, "sm": 6, "md": 4 }, "icon": "tabler-users", "color": "primary" },
+        "ui": {
+          "type": "field",
+          "cols": {
+            "cols": 12,
+            "sm": 6,
+            "md": 4
+          },
+          "icon": "tabler-users",
+          "color": "primary"
+        },
         "type": "display",
         "key": "members_total",
         "label": "Members"
       },
       {
-        "ui": { "type": "field", "cols": { "cols": 12, "sm": 6, "md": 4 }, "icon": "tabler-user-check", "color": "success" },
+        "ui": {
+          "type": "field",
+          "cols": {
+            "cols": 12,
+            "sm": 6,
+            "md": 4
+          },
+          "icon": "tabler-user-check",
+          "color": "success"
+        },
         "type": "display",
         "key": "members_active",
         "label": "Active members"
       },
       {
-        "ui": { "type": "field", "cols": { "cols": 12, "sm": 6, "md": 4 }, "icon": "tabler-user-plus", "color": "secondary" },
+        "ui": {
+          "type": "field",
+          "cols": {
+            "cols": 12,
+            "sm": 6,
+            "md": 4
+          },
+          "icon": "tabler-user-plus",
+          "color": "secondary"
+        },
         "type": "display",
         "key": "unenrolled_customers",
         "label": "Customers not yet enrolled"
@@ -49,12 +131,23 @@
     ]
   },
   {
-    "ui": { "type": "section", "class": "h-100", "icon": "tabler-chart-donut", "cols": { "cols": 12, "md": 5 } },
+    "ui": {
+      "type": "section",
+      "class": "h-100",
+      "icon": "tabler-chart-donut",
+      "cols": {
+        "cols": 12,
+        "md": 5
+      }
+    },
     "name": "Members by tier",
     "subtitle": "Everyone is counted, including those who have not reached the first threshold.",
     "elements": [
       {
-        "ui": { "type": "field", "cols": 12 },
+        "ui": {
+          "type": "field",
+          "cols": 12
+        },
         "type": "chart",
         "chart": "donut",
         "label": "Members",
@@ -67,12 +160,23 @@
     ]
   },
   {
-    "ui": { "type": "section", "class": "h-100", "icon": "tabler-arrows-exchange", "cols": { "cols": 12, "md": 7 } },
+    "ui": {
+      "type": "section",
+      "class": "h-100",
+      "icon": "tabler-arrows-exchange",
+      "cols": {
+        "cols": 12,
+        "md": 7
+      }
+    },
     "name": "Points issued and redeemed",
     "subtitle": "Issued consistently above redeemed means the liability is still growing.",
     "elements": [
       {
-        "ui": { "type": "field", "cols": 12 },
+        "ui": {
+          "type": "field",
+          "cols": 12
+        },
         "type": "chart",
         "chart": "bar",
         "label": "Points",
@@ -84,12 +188,23 @@
     ]
   },
   {
-    "ui": { "type": "section", "class": "h-100", "icon": "tabler-user-plus", "cols": { "cols": 12, "md": 7 } },
+    "ui": {
+      "type": "section",
+      "class": "h-100",
+      "icon": "tabler-user-plus",
+      "cols": {
+        "cols": 12,
+        "md": 7
+      }
+    },
     "name": "New members",
     "subtitle": "Counted on the date they joined the programme, not when the record was created.",
     "elements": [
       {
-        "ui": { "type": "field", "cols": 12 },
+        "ui": {
+          "type": "field",
+          "cols": 12
+        },
         "type": "chart",
         "chart": "area",
         "label": "Joined",
@@ -101,12 +216,23 @@
     ]
   },
   {
-    "ui": { "type": "section", "class": "h-100", "icon": "tabler-trophy", "cols": { "cols": 12, "md": 5 } },
+    "ui": {
+      "type": "section",
+      "class": "h-100",
+      "icon": "tabler-trophy",
+      "cols": {
+        "cols": 12,
+        "md": 5
+      }
+    },
     "name": "Largest balances",
     "subtitle": "Unspent points, so this is who the shop owes most — not who has earned most.",
     "elements": [
       {
-        "ui": { "type": "field", "cols": 12 },
+        "ui": {
+          "type": "field",
+          "cols": 12
+        },
         "type": "chart",
         "chart": "bar",
         "horizontal": true,

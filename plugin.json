@@ -2,7 +2,7 @@
   "schema": 1,
   "slug": "loyalty-points",
   "name": "Loyalty Points",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "author": {
     "name": "Ovynt Labs"
   },
@@ -136,7 +136,6 @@
       "Backend\\Listeners\\RedeemPointsAtCheckout"
     ]
   },
-  "migrations": "backend/migrations",
   "uninstall": {
     "drop_tables": [
       "loyalty_transactions",

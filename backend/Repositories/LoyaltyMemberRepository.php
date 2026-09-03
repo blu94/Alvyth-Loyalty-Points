@@ -2,11 +2,13 @@
 
 namespace Plugin\LoyaltyPoints\Backend\Repositories;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 use Plugin\LoyaltyPoints\Backend\Models\LoyaltyMember;
 use Plugin\LoyaltyPoints\Backend\Models\LoyaltySetting;
 use Plugin\LoyaltyPoints\Backend\Models\LoyaltyTier;
 use Plugin\LoyaltyPoints\Backend\Models\LoyaltyTransaction;
+use Plugin\LoyaltyPoints\Backend\Services\Ledger;
 use Plugin\LoyaltyPoints\Backend\Services\PointsExpiry;
 
 /**
@@ -18,6 +20,31 @@ use Plugin\LoyaltyPoints\Backend\Services\PointsExpiry;
  */
 class LoyaltyMemberRepository
 {
+    public function __construct(private Ledger $ledger)
+    {
+    }
+
+    /**
+     * Who counts as a customer.
+     *
+     * Pinned here and used by both the Overview's "not yet enrolled" figure and the
+     * enrolment picker, because the two disagreeing about the population is how the count
+     * came to include people who could never enrol.
+     *
+     * Three conditions, each for its own reason. Through the **model** rather than
+     * `DB::table()`, so `User`'s `SoftDeletes` global scope applies and a deleted customer
+     * stops being counted as a prospect. **Active**, matching core's own customer picker.
+     * And **holding no staff role**: administrators and editors live in the same `users`
+     * table as customers, so without this every member of staff was a customer the
+     * programme had failed to recruit.
+     */
+    public static function customers()
+    {
+        return User::query()
+            ->where('status', 'active')
+            ->whereDoesntHave('roles');
+    }
+
     public function baseIndexQuery(array $filters = [])
     {
         // Eager-loaded because the list renders `user.name` and `tier.title` on every row;
@@ -46,7 +73,9 @@ class LoyaltyMemberRepository
         // Zero out from the (empty) ledger rather than trusting whatever was posted:
         // balance is derived, so accepting it from a form would be the one way to make
         // it disagree with the transactions.
-        return $member->recalculate();
+        $this->ledger->refresh($member->id);
+
+        return $member->refresh();
     }
 
     public function find($id)
@@ -66,7 +95,9 @@ class LoyaltyMemberRepository
 
         $member->update($data);
 
-        return $member->recalculate();
+        $this->ledger->refresh($member->id);
+
+        return $member->refresh();
     }
 
     public function delete($id)
@@ -83,6 +114,26 @@ class LoyaltyMemberRepository
 
         foreach (array_intersect($columns, ['status']) as $column) {
             $out[$column] = LoyaltyMember::query()->distinct()->pluck($column)->filter()->values();
+        }
+
+        // The enrolment picker, served from here rather than from core's
+        // `/admin/users/options`.
+        //
+        // That endpoint answers with every active user and applies no role filter, so the
+        // list of "customers to enrol" offered every administrator and editor in the shop —
+        // and enrolling one put a staff account into the members table and every tier figure.
+        // Core's endpoint is right for what it is; this module needs a narrower question
+        // asked, and `customers()` is the same predicate the Overview counts with.
+        if (in_array('user_id', $columns, true)) {
+            $out['user_id'] = self::customers()
+                ->whereNotIn('id', LoyaltyMember::query()->select('user_id'))
+                ->orderBy('name')
+                ->get(['id', 'name', 'email'])
+                ->map(fn ($user) => [
+                    'title' => $user->name . ' (' . $user->email . ')',
+                    'value' => $user->id,
+                ])
+                ->values();
         }
 
         return $out;
@@ -116,21 +167,75 @@ class LoyaltyMemberRepository
             return $this->runExpiry();
         }
 
+        if ($slug === 'expire-undo') {
+            return $this->undoExpiry($data);
+        }
+
         if ($slug !== 'settings') {
             return [];
         }
 
+        return $this->saveSettings($data);
+    }
+
+    /**
+     * Write the programme's rules, or refuse and say why.
+     *
+     * **Validated rather than clamped.** These arrive as `$request->all()` — `ModuleRequest`
+     * validates CRUD payloads against the form schema and a custom page is not one — and the
+     * old code coerced whatever turned up with `max(0, (float) …)`. A non-numeric earn rate
+     * therefore cast to `0`, saved successfully, and stopped the programme awarding anything;
+     * the screen reported success and nothing anywhere said the rate was now zero. Silently
+     * becoming zero is the one outcome an operator cannot see, which makes clamping the wrong
+     * instinct here even though it never throws.
+     *
+     * Maxima match the column precision, so a value too large for `decimal(8,2)` comes back
+     * as a message on the field instead of a driver error surfacing as a 500.
+     *
+     * `ValidationException` is thrown deliberately: `GenericModuleController` wraps this in a
+     * transaction and catches `\Throwable`, so the save is rolled back and the operator is
+     * told, rather than a bad rate being half-applied.
+     *
+     * @param  array<string,mixed>  $data
+     * @return array<string,mixed>
+     */
+    private function saveSettings(array $data): array
+    {
+        // Blanks arrive from number inputs the operator cleared. For the two nullable rules
+        // that means "no policy"; for the required ones it means the field was emptied, and
+        // the validator should say so rather than a cast turning it into zero.
+        foreach (['expiry_months', 'max_redemption_percent'] as $nullable) {
+            if (($data[$nullable] ?? null) === '') {
+                $data[$nullable] = null;
+            }
+        }
+
+        $validated = Validator::make($data, [
+            'points_per_currency'    => ['required', 'numeric', 'min:0', 'max:999999.99'],
+            'earn_base'             => ['required', 'in:' . implode(',', LoyaltySetting::EARN_BASES)],
+            'redeem_value'           => ['required', 'numeric', 'min:0', 'max:9999.9999'],
+            'expiry_months'          => ['nullable', 'integer', 'min:1', 'max:1200'],
+            'minimum_redemption'     => ['required', 'integer', 'min:0', 'max:4294967295'],
+            'max_redemption_percent' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ], [
+            'points_per_currency.required' => 'Set an earn rate. A blank rate would stop the programme awarding anything.',
+            'redeem_value.required'        => 'Set what a point is worth. A blank value would make every balance unredeemable.',
+            'expiry_months.min'            => 'An expiry window of zero months would retire points the moment they are earned. Leave it empty for "never".',
+            'max_redemption_percent.max'   => 'A cap above 100% is the same as no cap — leave it empty instead.',
+        ])->validate();
+
         $settings = LoyaltySetting::current();
 
-        // Whitelisted, not `$request->all()`: the page posts its whole bound model back,
-        // which on the settings screen includes `id` and the timestamps it was loaded with.
+        // Whitelisted from the validated set, not from `$data`: the page posts its whole
+        // bound model back, which on the settings screen includes `id` and the timestamps it
+        // was loaded with.
         $settings->update([
-            'points_per_currency' => max(0, (float) ($data['points_per_currency'] ?? 0)),
-            'redeem_value'        => max(0, (float) ($data['redeem_value'] ?? 0)),
-            'expiry_months'       => ($data['expiry_months'] ?? null) !== null && $data['expiry_months'] !== ''
-                ? max(0, (int) $data['expiry_months'])
-                : null,
-            'minimum_redemption'  => max(0, (int) ($data['minimum_redemption'] ?? 0)),
+            'points_per_currency'    => $validated['points_per_currency'],
+            'earn_base'              => $validated['earn_base'],
+            'redeem_value'           => $validated['redeem_value'],
+            'expiry_months'          => $validated['expiry_months'] ?? null,
+            'minimum_redemption'     => $validated['minimum_redemption'],
+            'max_redemption_percent' => $validated['max_redemption_percent'] ?? null,
         ]);
 
         return $settings->fresh()->toArray();
@@ -157,11 +262,63 @@ class LoyaltyMemberRepository
             return $result + ['message' => 'Nothing to expire — no points are older than ' . $result['months'] . ' months.'];
         }
 
-        return $result + ['message' => sprintf(
-            'Expired %s points across %d %s.',
+        $message = sprintf(
+            'Expired %s points across %d %s. Reference %s — keep it if you need to undo this.',
             number_format($result['expired_points']),
             $result['expired_members'],
-            $result['expired_members'] === 1 ? 'member' : 'members'
+            $result['expired_members'] === 1 ? 'member' : 'members',
+            $result['batch']
+        );
+
+        // A run stops at the batch ceiling rather than sweeping the whole programme inside
+        // one transaction. Saying so is the difference between an operator knowing the job
+        // is half done and believing it finished.
+        if ($result['more']) {
+            $message .= ' There are more to do — press again to continue.';
+        }
+
+        return $result + ['message' => $message];
+    }
+
+    /**
+     * Give back one expiry batch.
+     *
+     * Bulk expiry is the only irreversible write in the package and it is authorised by the
+     * same grant that adds a single ledger row. Making it undoable is the control that
+     * actually helps: a mistaken press is recoverable in one action rather than reconstructed
+     * by hand from the ledger.
+     *
+     * Restored with mirror entries carrying `reverses_id`, never by deleting the expiries —
+     * the points were retired, and then they were given back, and the history should say both.
+     *
+     * @param  array<string,mixed>  $data
+     * @return array<string,mixed>
+     */
+    private function undoExpiry(array $data): array
+    {
+        $expiry = app(PointsExpiry::class);
+
+        // Defaults to the most recent run that has not already been given back. A list
+        // toolbar has nowhere to type a reference, and an undo an operator cannot reach
+        // without one is not a control they have.
+        $batch = trim((string) ($data['batch'] ?? '')) ?: $expiry->latestBatch();
+
+        if ($batch === null || $batch === '') {
+            return ['message' => 'There is no expiry run left to undo.'];
+        }
+
+        $result = $expiry->undo($batch);
+
+        if ($result['restored_points'] === 0) {
+            return $result + ['message' => 'Nothing to undo under reference ' . $batch . '. Either it does not exist, or it has already been reversed.'];
+        }
+
+        return $result + ['message' => sprintf(
+            'Restored %s points to %d %s from run %s.',
+            number_format($result['restored_points']),
+            $result['restored_members'],
+            $result['restored_members'] === 1 ? 'member' : 'members',
+            $batch
         )];
     }
 
@@ -234,7 +391,15 @@ class LoyaltyMemberRepository
             // `redeem_value` is a setting rather than a hard-coded rate.
             'liability'         => number_format($outstanding * (float) $settings->redeem_value, 2),
 
-            'unenrolled_customers' => DB::table('users')
+            // Counted through the model and filtered to actual customers.
+            //
+            // This was `DB::table('users')` with no filter at all, which got it wrong three
+            // ways at once: the raw builder bypasses `User`'s `SoftDeletes` scope, so deleted
+            // customers counted as prospects; there was no `status` filter, so deactivated
+            // accounts counted; and there was no role filter, so every administrator and
+            // editor in the shop was a customer the programme had failed to recruit. On the
+            // one figure that tells an owner how much growth is left.
+            'unenrolled_customers' => self::customers()
                 ->whereNotIn('id', LoyaltyMember::query()->select('user_id'))
                 ->count(),
 

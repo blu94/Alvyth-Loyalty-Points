@@ -14,6 +14,12 @@
     Nothing is deducted by typing a number here. The order is priced with the reduction and
     the ledger entry is written when the order is paid, so an abandoned checkout costs the
     customer nothing.
+
+    Copy is written as whole sentences with placeholders, never assembled from translated
+    fragments. `__('available, worth about')` reads fine in English and cannot be translated
+    into a language that orders the clause differently, because the word order was baked into
+    the template rather than left to the translator. `trans_choice` rather than `Str::plural`
+    for the same reason: plural rules are not two-way everywhere.
 --}}
 <div class="mb-4">
     <label for="loyalty-points-input" class="form-label fw-bold fs-14 tracking-wide-1 mb-2">
@@ -39,11 +45,16 @@
            aria-describedby="loyalty-points-help">
 
     <div id="loyalty-points-help" class="text-muted fs-14 mt-2">
-        {{ number_format($balance) }} {{ \Illuminate\Support\Str::plural('point', $balance) }}
-        {{ __('available, worth about') }} {{ $worth }}.
+        {{ trans_choice(
+            '{1}You have :points point, worth about :worth.|[2,*]You have :points points, worth about :worth.',
+            $balance,
+            ['points' => number_format($balance), 'worth' => $worth]
+        ) }}
+
         @if ($minimum > 0)
-            {{ __('Spend at least') }} {{ number_format($minimum) }}.
+            {{ __('You need to spend at least :minimum in one go.', ['minimum' => number_format($minimum)]) }}
         @endif
+
         {{-- Said before they type, not after core silently charges them less. --}}
         {{ __('Anything over the order total is left on your balance.') }}
     </div>

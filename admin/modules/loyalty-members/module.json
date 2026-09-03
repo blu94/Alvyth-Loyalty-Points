@@ -6,8 +6,26 @@
   "order": 40,
   "icon": "tabler-users",
   "api": "/admin/modules/loyalty-members",
-  "table": { "$ref": "index.json" },
-  "form": { "$ref": "form.json" },
-  "overview": { "$ref": "overview.json" },
-  "settings": { "$ref": "settings.json" }
+  "table": {
+    "$ref": "index.json"
+  },
+  "form": {
+    "$ref": "form.json"
+  },
+  "overview": {
+    "$ref": "overview.json"
+  },
+  "settings": {
+    "$ref": "settings.json"
+  },
+  "pages": {
+    "expire": {
+      "resource": "loyalty",
+      "verb": "delete"
+    },
+    "expire-undo": {
+      "resource": "loyalty",
+      "verb": "delete"
+    }
+  }
 }

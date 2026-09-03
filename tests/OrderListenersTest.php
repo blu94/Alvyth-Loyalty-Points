@@ -65,13 +65,13 @@ class OrderListenersTest extends TestCase
     {
         $event = new OrderStatusChanged($order, Order::FIELD_PAYMENT, 'pending', Order::PAYMENT_PAID);
 
-        (new AwardPointsOnPaidOrder())->onOrderStatusChanged($event);
-        (new SpendPointsOnPaidOrder())->onOrderStatusChanged($event);
+        app(AwardPointsOnPaidOrder::class)->onOrderStatusChanged($event);
+        app(SpendPointsOnPaidOrder::class)->onOrderStatusChanged($event);
     }
 
     private function refunded(Order $order): void
     {
-        (new ReversePointsOnRefundedOrder())->onOrderStatusChanged(
+        app(ReversePointsOnRefundedOrder::class)->onOrderStatusChanged(
             new OrderStatusChanged($order, Order::FIELD_PAYMENT, Order::PAYMENT_PAID, Order::PAYMENT_REFUNDED)
         );
     }
@@ -140,7 +140,7 @@ class OrderListenersTest extends TestCase
         $user  = $this->customer();
         $order = $this->order($user, 100);
 
-        (new AwardPointsOnPaidOrder())->onOrderStatusChanged(
+        app(AwardPointsOnPaidOrder::class)->onOrderStatusChanged(
             new OrderStatusChanged($order, Order::FIELD_FULFILLMENT, null, 'paid')
         );
 
@@ -285,10 +285,18 @@ class OrderListenersTest extends TestCase
 
         $this->refunded($order);
 
-        $reversals = LoyaltyTransaction::where('order_id', $order->id)->whereNotNull('reverses_id')->get();
+        // Found through `reverses_id`, not through the order.
+        //
+        // A mirror deliberately carries no `order_id`: the `(order_id, type)` uniqueness
+        // guard permits one `adjust` per order, and an order that both earned and redeemed
+        // needs two mirrors, so stamping them would silently drop the second. What each one
+        // undoes is recorded by the pointer, which is the fact `recalculate()` reads anyway.
+        $originals = LoyaltyTransaction::where('order_id', $order->id)->whereNull('reverses_id')->pluck('id');
+        $reversals = LoyaltyTransaction::whereIn('reverses_id', $originals)->get();
 
         $this->assertCount(1, $reversals);
-        $this->assertNotNull($reversals->first()->reverses_id);
+        $this->assertSame($originals->first(), $reversals->first()->reverses_id);
+        $this->assertNull($reversals->first()->order_id, 'A mirror must not claim the order id its original holds.');
     }
 
     #[Test]
@@ -301,8 +309,9 @@ class OrderListenersTest extends TestCase
         $this->refunded($order);
         $this->refunded($order);
 
-        $this->assertSame(1, LoyaltyTransaction::where('order_id', $order->id)
-            ->whereNotNull('reverses_id')->count());
+        $originals = LoyaltyTransaction::where('order_id', $order->id)->whereNull('reverses_id')->pluck('id');
+
+        $this->assertSame(1, LoyaltyTransaction::whereIn('reverses_id', $originals)->count());
         $this->assertSame(0, $this->memberFor($user)->refresh()->balance);
     }
 

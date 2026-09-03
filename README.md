@@ -24,7 +24,7 @@ Removing the plugin keeps its data by default, so reinstalling restores everythi
 |---|---|
 | **Loyalty → Overview** | Points issued, redeemed, expired, outstanding, and what the outstanding balance is worth |
 | **Loyalty → Members** | Every enrolled customer: balance, lifetime points, tier |
-| **Loyalty → Settings** | Earn rate, point value, minimum redemption, expiry window |
+| **Loyalty → Settings** | Earn rate, what points are earned on, point value, minimum redemption, redemption cap, expiry window |
 | **Points Activity** | The ledger — every earn, redemption, adjustment and expiry |
 | **Loyalty Tiers** | The tier ladder: a name and the lifetime points needed to reach it |
 
@@ -46,8 +46,15 @@ Entry types carry their own sign rule. Typing `100` against **Redeem** subtracts
 types a minus sign for a redemption. **Adjust** keeps the sign you type, because correcting
 in either direction is exactly what it is for.
 
-Editing a tier's threshold re-ranks every member, so the standings on screen always match the
-rules currently in force.
+**Entries are append-only.** An entry cannot be deleted, and editing one changes its reason
+and nothing else — `points`, `type` and the member it belongs to are what a balance was
+computed from, and rewriting them would leave every screen agreeing with a history that never
+happened. Correct a mistake with an **Adjust** entry, which leaves both numbers on the record.
+Every entry an operator writes also records **who wrote it**, and shows up in the Activity Log
+alongside every other change made in the admin.
+
+Editing a tier's threshold re-ranks the members it could have moved, so the standings on
+screen always match the rules currently in force.
 
 ## The programme runs itself
 
@@ -57,7 +64,8 @@ Four listeners do the work; an operator only intervenes to correct something.
 |---|---|
 | An order becomes **paid** | The customer is enrolled if new, and an `earn` entry is written at your rate |
 | A customer **spends points at checkout** | The order is priced with the reduction, and the `redeem` entry is written **on payment** |
-| A paid order is **refunded** | Both entries are reversed with mirrored entries that point at what they undo |
+| A paid order is **refunded**, **voided**, or **cancelled after payment** | Both entries are reversed with mirrored entries that point at what they undo |
+| A paid order is **partly refunded** | Nothing is clawed back automatically — staff are notified so somebody can decide |
 
 **Points are awarded on payment, not on placement.** An abandoned checkout or an unpaid
 invoice would otherwise mint value you had to claw back.
@@ -67,6 +75,12 @@ while the customer is still deciding and may be followed by a gateway failure; d
 and refunding on failure would invent a reversal path for the common case rather than the rare
 one. Until the order is paid, an abandoned checkout costs the customer nothing.
 
+**The balance is checked again when the order is paid.** Quoting and debiting are separated by
+however long a payment takes, and a balance can move in between — two orders placed before
+either is paid, an expiry, an operator's adjustment. The debit is clamped to what the member
+actually holds, so a balance can never go below zero, and a quote that could not be funded is
+recorded on the order and raised with staff instead of being absorbed in silence.
+
 ### Spending points
 
 The plugin renders a points box into the storefront's `checkout` slot — one number input
@@ -75,9 +89,16 @@ carrying `data-checkout-field="loyalty_points"`. The theme carries the value to 
 **no JavaScript**; a theme that renders the slot gets a working control.
 
 It proposes an amount and core decides. Never more than the customer holds, never more than
-the order is worth, and never below your minimum — and when the order is smaller than the
-points offered, only the points actually used are charged. Asking to spend 999,999 points on a
-5.00 order takes 5.00 off and costs 500 points, not the balance.
+the order is worth, never below your minimum, and never above your redemption cap — and when
+the order is smaller than the points offered, only the points actually used are charged.
+Asking to spend 999,999 points on a 5.00 order takes 5.00 off and costs 500 points, not the
+balance.
+
+Every clamp is applied to the **points**, in whole numbers, and the money is derived from the
+result once. Pricing the reduction and then recovering the points from it means dividing one
+binary float by another, and the round trip does not close: measured across 1,000 amounts, 125
+came back a point short at a rate of 0.01 and 348 at 0.05. `redeem_value` is `decimal(8,4)`,
+so the arithmetic is done in ten-thousandths of a currency unit and loses nothing.
 
 A **suspended** member keeps their balance and stops spending it, checked in the listener and
 not only in the UI. A guest sees no box.
@@ -90,6 +111,19 @@ earn — so reversing a redemption does not read as earning. A plain `SUM(points
 in both directions and let a refund raise someone into a higher tier. Tier standing must not
 depend on a reason string, which is why this is a column and not prose matching.
 
+### What points are earned on
+
+**Settings → Points are earned on** chooses the base:
+
+- **Merchandise total, after discounts** — the goods, net of every discount including the
+  customer's own redemption. Excludes tax, which you collect and remit, and shipping, which
+  you largely pass to a carrier. This is what most programmes use.
+- **Everything the customer paid** — `grand_total`, tax and shipping included. The default,
+  so that upgrading this package never silently changes what an existing programme costs.
+
+**Most of one order points may cover (%)** caps a single redemption. Empty means uncapped,
+which lets one order be paid for entirely in points.
+
 ### Expiry — your policy, applied when you press the button
 
 `expiry_months` sets how long points last, in **Settings**. **Points Activity → Expire Old
@@ -99,8 +133,15 @@ and a recalculated balance.
 The button lives on Points Activity rather than beside the setting, for two reasons. It writes
 ledger rows, and that screen is the ledger — you press it and watch the entries appear. And a
 custom page's renderer supports only a `save` action, with no confirmation step; the list
-toolbar is where `"action": "request"` and its confirm dialog actually work. An irreversible
-bulk write needs the confirmation more than it needs to sit next to its setting.
+toolbar is where `"action": "request"` and its confirm dialog actually work. A bulk write
+needs the confirmation more than it needs to sit next to its setting.
+
+**A run is capped and reversible.** Each press retires up to 2,000 members and says whether
+there are more to do — an unbounded sweep runs inside one transaction and would hold its locks
+across every member in the programme. Every entry from one run is stamped with a reference, and
+**Undo Last Expiry** gives the most recent one back with mirrored corrections. Because the
+action retires spendable balance across the whole membership, it is gated on `loyalty.delete`
+rather than inheriting `create` from the transport that carries it.
 
 **Run by hand, not on a schedule.** A plugin registers no service provider and no console
 command, so there is nowhere for this package to hang a cron entry. Rather than a setting
@@ -131,12 +172,16 @@ admin/modules/
     module.json  index.json  form.json
 admin/sections/
   PointsBadge.json                            page-builder section schema
+admin/
+  notifications.json                          the two staff alerts this package can raise
 backend/
   Models/         LoyaltyMember · LoyaltyTransaction · LoyaltyTier · LoyaltySetting
   Repositories/   one per module — baseIndexQuery/create/find/update/delete/getOptions
   Listeners/      AwardPointsOnPaidOrder · SpendPointsOnPaidOrder
                   ReversePointsOnRefundedOrder · RedeemPointsAtCheckout
-  Services/       PointsExpiry — the expiry rule, testable without a screen
+                  ContributeGdprExport
+  Services/       Ledger — the one writer: entry + recompute, in one transaction
+                  PointsExpiry — the expiry rule, testable without a screen
   Support/        CurrentCustomer · PointsBadge · RedeemBox — storefront rendering
   migrations/     four tables, plus reverses_id
 frontend/blade/
@@ -181,6 +226,21 @@ wins because `create-plugin.md` forbids nesting a section inside a section, so a
 several sections has nowhere to put them but the top level — and a page that grows a second
 section should not have to change shape to get one.
 
+## Data protection
+
+A membership is a behavioural profile — what somebody bought, how often, and what they were
+rewarded for it — so it belongs in a subject access response. The plugin answers core's
+`GdprCollecting` event with the member's standing and **every entry in their ledger**, under
+its own `plugin:loyalty-points` key. A balance without the entries behind it is a conclusion
+rather than a record, and the customer cannot check it.
+
+Erasure needs no counterpart. Core anonymises the `users` row in place and the membership hangs
+off `user_id`, so the ledger survives with no name attached — which is correct: the shop's
+liability is still real and is no longer about an identifiable person.
+
+The one field capable of holding personal data nobody planned for is the **reason** an operator
+types on an entry. It is exported, and the export says so.
+
 ## Tests
 
 `tests/` ships with the package. There is no separate harness: the plugin's classes only
@@ -198,8 +258,13 @@ docker exec ovynt_app php vendor/bin/phpunit \
 ```
 
 They cover the ledger rules — what `recalculate()` does to balance, lifetime and tier across
-earn, redeem, expiry, adjustment and refund — and the checkout listener's clamping. Reinstall
-after editing a test; the installed copy is what runs.
+earn, redeem, expiry, adjustment and refund — and the checkout listener's clamping.
+
+`MoneyBoundaryTest` and `ProgrammeAdminTest` cover the boundary the ledger meets the world at,
+which is where money is actually lost: two orders spending one balance, the exact point values
+the old float round-trip got wrong, one payment delivered twice, every way an order's money can
+end, the redemption cap and earn base, an append-only ledger, and the subject access export.
+Reinstall after editing a test; the installed copy is what runs.
 
 Two rules from `.agent/skills/laravel-testing.md` apply unchanged: **`DatabaseTransactions`,
 never `RefreshDatabase`**, and never run two suites at once — these do DDL on `ovynt_test`.

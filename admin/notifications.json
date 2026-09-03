@@ -1,0 +1,34 @@
+{
+    "types": [
+        {
+            "key": "redemption_shortfall",
+            "name": "Redemption could not be funded",
+            "description": "A paid order was quoted more loyalty points than the customer's balance could cover, so only part of the redemption was charged. Somebody has to decide whether to honour the difference.",
+            "audience": "staff",
+            "permission": "loyalty",
+            "level": "warning",
+            "icon": "tabler-alert-triangle",
+            "collapse": "subject",
+            "action_url": "/module/loyalty-transactions",
+            "channels": ["inapp"],
+            "placeholders": ["order_number", "quoted", "charged", "shortfall"],
+            "title": { "en": "Order {{ order_number }} redeemed more points than were held" },
+            "body": { "en": "The order was priced with {{ quoted }} points off, but only {{ charged }} could be charged — a shortfall of {{ shortfall }}. The customer has already paid the reduced amount. Decide whether to absorb the difference or post a correcting entry." }
+        },
+        {
+            "key": "partial_refund_review",
+            "name": "Partial refund needs a points decision",
+            "description": "An order was partially refunded. There is no defensible way to split the points automatically, so this asks an operator to make the call.",
+            "audience": "staff",
+            "permission": "loyalty",
+            "level": "info",
+            "icon": "tabler-receipt-refund",
+            "collapse": "subject",
+            "action_url": "/module/loyalty-transactions",
+            "channels": ["inapp"],
+            "placeholders": ["order_number", "earned", "redeemed"],
+            "title": { "en": "Order {{ order_number }} was partly refunded" },
+            "body": { "en": "It earned {{ earned }} points and redeemed {{ redeemed }}. Points are not clawed back automatically for a partial refund, because how much to take back depends on which lines went back. Post an adjustment under Points Activity if this one needs correcting." }
+        }
+    ]
+}

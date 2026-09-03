@@ -1,66 +1,120 @@
 {
   "elements": [
     {
-      "ui": { "type": "section", "cols": 12, "icon": "tabler-arrows-exchange" },
+      "ui": {
+        "type": "section",
+        "cols": 12,
+        "icon": "tabler-arrows-exchange"
+      },
       "name": "Ledger Entry",
-      "subtitle": "Award, redeem or correct a member's points. The member's balance and tier are recalculated when this is saved.",
+      "subtitle": "Award, redeem or correct a member's points. The member's balance and tier are recalculated when this is saved. An entry cannot be edited or deleted afterwards except for its reason \u2014 correct a mistake with an Adjust entry, which leaves both numbers in the history.",
       "elements": [
         {
-          "ui": { "type": "field", "cols": 12 },
+          "ui": {
+            "type": "field",
+            "cols": 12
+          },
           "key": "member_id",
           "type": "autocomplete",
           "label": "Member",
           "placeholder": "Search enrolled customers",
-          "hint": "Only enrolled customers appear here — enrol them under Loyalty first.",
+          "hint": "Only enrolled customers appear here \u2014 enrol them under Loyalty first.",
           "options": {
             "url": "/admin/modules/loyalty-members",
             "master": "data",
-            "map": { "title": "user.name", "value": "id" }
+            "map": {
+              "title": "user.name",
+              "value": "id"
+            }
           },
-          "rules": ["required", "integer", "exists:loyalty_members,id"]
+          "rules": [
+            "required",
+            "integer",
+            "exists:loyalty_members,id"
+          ]
         },
         {
-          "ui": { "type": "field", "cols": 6 },
+          "ui": {
+            "type": "field",
+            "cols": 6
+          },
           "key": "type",
           "type": "select",
           "label": "Type",
           "default": "earn",
-          "hint": "Redeem and Expire subtract points — enter a positive number and the sign is applied for you. Adjust keeps the sign you type.",
+          "hint": "Redeem and Expire subtract points \u2014 enter a positive number and the sign is applied for you. Adjust keeps the sign you type.",
           "options": {
             "items": [
-              { "title": "Earn", "value": "earn" },
-              { "title": "Redeem", "value": "redeem" },
-              { "title": "Adjust", "value": "adjust" },
-              { "title": "Expire", "value": "expire" }
+              {
+                "title": "Earn",
+                "value": "earn"
+              },
+              {
+                "title": "Redeem",
+                "value": "redeem"
+              },
+              {
+                "title": "Adjust",
+                "value": "adjust"
+              },
+              {
+                "title": "Expire",
+                "value": "expire"
+              }
             ]
           },
-          "rules": ["required", "in:earn,redeem,adjust,expire"]
+          "rules": [
+            "required",
+            "in:earn,redeem,adjust,expire"
+          ]
         },
         {
-          "ui": { "type": "field", "cols": 6 },
+          "ui": {
+            "type": "field",
+            "cols": 6
+          },
           "key": "points",
           "type": "number",
           "label": "Points",
           "placeholder": "e.g. 250",
-          "rules": ["required", "integer"]
+          "rules": [
+            "required",
+            "integer",
+            "between:-1000000,1000000",
+            "not_in:0"
+          ],
+          "hint": "Up to 1,000,000 per entry. Redeem and Expire subtract \u2014 enter a positive number and the sign is applied for you. Adjust keeps the sign you type."
         },
         {
-          "ui": { "type": "field", "cols": 12 },
+          "ui": {
+            "type": "field",
+            "cols": 12
+          },
           "key": "reason",
           "type": "text",
           "label": "Reason",
           "placeholder": "e.g. Order ORD-000123, goodwill gesture, expired 2026 balance",
-          "hint": "Shown on the activity list. Worth filling in — it is the only record of why the points moved.",
-          "rules": ["nullable", "max:255"]
+          "hint": "Shown on the activity list. Worth filling in \u2014 it is the only record of why the points moved.",
+          "rules": [
+            "nullable",
+            "max:255"
+          ]
         },
         {
-          "ui": { "type": "field", "cols": 12 },
+          "ui": {
+            "type": "field",
+            "cols": 12
+          },
           "key": "order_id",
           "type": "number",
           "label": "Order ID",
           "placeholder": "Optional",
-          "hint": "Links this entry to an order for reference. Kept even if the order is later deleted.",
-          "rules": ["nullable", "integer", "min:1"]
+          "hint": "Links this entry to an order for reference. Kept even if the order is later deleted. One earn and one redemption per order is enforced by the database.",
+          "rules": [
+            "nullable",
+            "integer",
+            "min:1"
+          ]
         }
       ]
     }
@@ -68,13 +122,27 @@
   "sidebar": {
     "elements": [
       {
-        "ui": { "type": "row", "dense": true },
+        "ui": {
+          "type": "row",
+          "dense": true
+        },
         "elements": [
           {
-            "ui": { "type": "field" },
+            "ui": {
+              "type": "field"
+            },
             "key": "created_at",
             "type": "display",
             "label": "Recorded"
+          },
+          {
+            "ui": {
+              "type": "field"
+            },
+            "key": "author.name",
+            "type": "display",
+            "label": "Recorded by",
+            "hint": "Blank when the programme wrote this entry itself \u2014 the order it came from is above."
           }
         ]
       }
@@ -82,16 +150,28 @@
     "footer": {
       "elements": [
         {
-          "ui": { "type": "row", "dense": true },
+          "ui": {
+            "type": "row",
+            "dense": true
+          },
           "elements": [
             {
-              "ui": { "type": "button", "color": "primary", "icon": "tabler-checkbox" },
+              "ui": {
+                "type": "button",
+                "color": "primary",
+                "icon": "tabler-checkbox"
+              },
               "action": "save",
               "label": "Save Entry",
               "redirect": false
             },
             {
-              "ui": { "type": "button", "color": "secondary", "variant": "tonal", "icon": "tabler-arrow-left" },
+              "ui": {
+                "type": "button",
+                "color": "secondary",
+                "variant": "tonal",
+                "icon": "tabler-arrow-left"
+              },
               "action": "cancel",
               "label": "Cancel",
               "redirect": "/module/loyalty-transactions"

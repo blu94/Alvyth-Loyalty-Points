@@ -1,43 +1,71 @@
 {
   "elements": [
     {
-      "ui": { "type": "section", "cols": 12, "icon": "tabler-user-plus" },
+      "ui": {
+        "type": "section",
+        "cols": 12,
+        "icon": "tabler-user-plus"
+      },
       "name": "Membership",
       "subtitle": "Which customer this membership belongs to",
       "elements": [
         {
-          "ui": { "type": "field", "cols": 12 },
+          "ui": {
+            "type": "field",
+            "cols": 12
+          },
           "key": "user_id",
           "type": "autocomplete",
           "label": "Customer",
           "placeholder": "Search customers by name or email",
-          "hint": "A customer can hold only one membership.",
-          "options": { "url": "/admin/users/options" },
-          "rules": ["required", "integer", "exists:users,id"]
+          "hint": "A customer can hold only one membership. Staff accounts are not listed.",
+          "options": {
+            "url": "/admin/modules/loyalty-members/options",
+            "master": "user_id"
+          },
+          "rules": [
+            "required",
+            "integer",
+            "exists:users,id",
+            "unique:loyalty_members,user_id"
+          ]
         }
       ]
     },
     {
-      "ui": { "type": "section", "cols": 12, "icon": "tabler-coin" },
+      "ui": {
+        "type": "section",
+        "cols": 12,
+        "icon": "tabler-coin"
+      },
       "name": "Standing",
-      "subtitle": "Balance, lifetime points and tier are calculated from this member's points activity — post an entry under Points Activity to change them.",
+      "subtitle": "Balance, lifetime points and tier are calculated from this member's points activity \u2014 post an entry under Points Activity to change them.",
       "elements": [
         {
-          "ui": { "type": "field", "cols": 4 },
+          "ui": {
+            "type": "field",
+            "cols": 4
+          },
           "key": "balance",
           "type": "display",
           "label": "Current balance",
           "hint": "Sum of every entry in the ledger."
         },
         {
-          "ui": { "type": "field", "cols": 4 },
+          "ui": {
+            "type": "field",
+            "cols": 4
+          },
           "key": "lifetime_points",
           "type": "display",
           "label": "Lifetime points",
-          "hint": "Earned only — redeeming never reduces this."
+          "hint": "Earned only \u2014 redeeming never reduces this."
         },
         {
-          "ui": { "type": "field", "cols": 4 },
+          "ui": {
+            "type": "field",
+            "cols": 4
+          },
           "key": "tier.title",
           "type": "display",
           "label": "Tier",
@@ -49,10 +77,15 @@
   "sidebar": {
     "elements": [
       {
-        "ui": { "type": "row", "dense": true },
+        "ui": {
+          "type": "row",
+          "dense": true
+        },
         "elements": [
           {
-            "ui": { "type": "field" },
+            "ui": {
+              "type": "field"
+            },
             "key": "status",
             "type": "select",
             "label": "Status",
@@ -60,11 +93,20 @@
             "hint": "A suspended member keeps their points but should not earn or redeem.",
             "options": {
               "items": [
-                { "title": "Active", "value": "active" },
-                { "title": "Suspended", "value": "suspended" }
+                {
+                  "title": "Active",
+                  "value": "active"
+                },
+                {
+                  "title": "Suspended",
+                  "value": "suspended"
+                }
               ]
             },
-            "rules": ["required", "in:active,suspended"]
+            "rules": [
+              "required",
+              "in:active,suspended"
+            ]
           }
         ]
       }
@@ -72,16 +114,28 @@
     "footer": {
       "elements": [
         {
-          "ui": { "type": "row", "dense": true },
+          "ui": {
+            "type": "row",
+            "dense": true
+          },
           "elements": [
             {
-              "ui": { "type": "button", "color": "primary", "icon": "tabler-checkbox" },
+              "ui": {
+                "type": "button",
+                "color": "primary",
+                "icon": "tabler-checkbox"
+              },
               "action": "save",
               "label": "Save Changes",
               "redirect": false
             },
             {
-              "ui": { "type": "button", "color": "secondary", "variant": "tonal", "icon": "tabler-arrow-left" },
+              "ui": {
+                "type": "button",
+                "color": "secondary",
+                "variant": "tonal",
+                "icon": "tabler-arrow-left"
+              },
               "action": "cancel",
               "label": "Cancel",
               "redirect": "/module/loyalty-members"

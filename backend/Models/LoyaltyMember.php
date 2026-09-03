@@ -3,10 +3,14 @@
 namespace Plugin\LoyaltyPoints\Backend\Models;
 
 use App\Models\User;
+use App\Traits\LogsSystemActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class LoyaltyMember extends Model
 {
+    /** Suspension, enrolment and removal are operator decisions; the trail records them. */
+    use LogsSystemActivity;
+
     protected $table = 'loyalty_members';
 
     protected $fillable = ['user_id', 'balance', 'lifetime_points', 'tier_id', 'status', 'joined_at'];

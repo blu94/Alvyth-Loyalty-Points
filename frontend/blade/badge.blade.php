@@ -58,17 +58,22 @@
                 <div class="progress-bar bg-dark" style="width: {{ $progress }}%"></div>
             </div>
             <p class="text-muted fs-14 mt-2 mb-0">
-                {{ number_format($toNext) }}
-                {{ \Illuminate\Support\Str::plural('point', $toNext) }}
-                to reach {{ $nextTier->title }}
+                {{-- One sentence with placeholders. This clause used to be built from a
+                     number, `Str::plural('point')` and the bare English words "to reach" —
+                     so the tier name's position was fixed by the template and the plural was
+                     English-only, neither of which a translator could do anything about. --}}
+                {{ trans_choice(
+                    '{1}:points more point to reach :tier|[2,*]:points more points to reach :tier',
+                    $toNext,
+                    ['points' => number_format($toNext), 'tier' => $nextTier->title]
+                ) }}
             </p>
         @endif
 
         {{-- Said plainly rather than left to be discovered at checkout. --}}
         @if ($minimum > 0 && $member->balance < $minimum)
             <p class="text-muted fs-14 mt-2 mb-0">
-                {{ __('You can redeem once you reach') }} {{ number_format($minimum) }}
-                {{ __('points') }}.
+                {{ __('You can redeem once you reach :minimum points.', ['minimum' => number_format($minimum)]) }}
             </p>
         @endif
     @else

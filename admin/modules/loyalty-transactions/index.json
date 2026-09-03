@@ -24,13 +24,32 @@
           "rounded": "md"
         },
         "label": "Expire Old Points",
-        "tooltip": "Write an expiry entry for every member holding points older than the window set in Settings",
+        "tooltip": "Write an expiry entry for every member holding points older than the window set in Settings. Capped per run, and reversible.",
         "action": "request",
         "method": "POST",
         "api": "/admin/modules/loyalty-members/page/expire",
         "params": {
           "confirm": true,
-          "confirmText": "Expire points older than the window set in Settings? This writes an expiry entry against each affected member and lowers their balance. It cannot be undone except by a manual adjustment."
+          "confirmText": "Expire points older than the window set in Settings? This writes an expiry entry against each affected member and lowers their balance. A run is capped, so you may need to press it more than once \u2014 and it can be given back with Undo Last Expiry."
+        }
+      },
+      {
+        "key": "expire-undo",
+        "ui": {
+          "type": "button",
+          "icon": "tabler-arrow-back-up",
+          "color": "warning",
+          "variant": "tonal",
+          "rounded": "md"
+        },
+        "label": "Undo Last Expiry",
+        "tooltip": "Give back the points retired by the most recent expiry run",
+        "action": "request",
+        "method": "POST",
+        "api": "/admin/modules/loyalty-members/page/expire-undo",
+        "params": {
+          "confirm": true,
+          "confirmText": "Give back the points retired by the most recent expiry run? Each expiry entry is mirrored by a correction, so the history keeps both."
         }
       },
       {
@@ -130,25 +149,19 @@
       "sortable": true,
       "align": "center",
       "type": "datetime"
+    },
+    {
+      "ui": {
+        "type": "display"
+      },
+      "label": "Recorded by",
+      "key": "author.name",
+      "sortable": false
     }
   ],
   "actions": {
     "elements": [
-      "edit",
-      {
-        "key": "delete",
-        "action": "delete",
-        "ui": {
-          "type": "button",
-          "icon": "tabler-trash",
-          "color": "error",
-          "rounded": true
-        },
-        "params": {
-          "confirm": true,
-          "confirmText": "Delete this ledger entry? The member's balance will be recalculated without it."
-        }
-      }
+      "edit"
     ],
     "class": "fit"
   }

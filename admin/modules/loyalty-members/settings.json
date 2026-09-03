@@ -31,8 +31,40 @@
             "rules": [
               "required",
               "numeric",
-              "min:0"
+              "min:0",
+              "max:999999.99"
             ]
+          },
+          {
+            "ui": {
+              "type": "field",
+              "cols": {
+                "cols": 12,
+                "md": 6
+              }
+            },
+            "key": "earn_base",
+            "type": "select",
+            "label": "Points are earned on",
+            "hint": "Merchandise is the goods after discounts, and is what most programmes use \u2014 tax is collected for the state and shipping is largely paid to a carrier, so points on either are paid out on money the shop never keeps. Left on the total paid so upgrading does not silently change what your programme costs.",
+            "default": "grand_total",
+            "options": {
+              "items": [
+                {
+                  "title": "Merchandise total, after discounts",
+                  "value": "merchandise"
+                },
+                {
+                  "title": "Everything the customer paid, including tax and shipping",
+                  "value": "grand_total"
+                }
+              ]
+            },
+            "rules": [
+              "required",
+              "in:merchandise,grand_total"
+            ],
+            "persistentHint": true
           },
           {
             "ui": {
@@ -46,12 +78,13 @@
             "type": "number",
             "label": "Value of 1 point when redeemed",
             "placeholder": "e.g. 0.01",
-            "hint": "Used to value the outstanding balance on the Overview.",
+            "hint": "Used to price a redemption at checkout and to value the outstanding balance on the Overview.",
             "default": 0.01,
             "rules": [
               "required",
               "numeric",
-              "min:0"
+              "min:0",
+              "max:9999.9999"
             ]
           },
           {
@@ -71,7 +104,8 @@
             "rules": [
               "required",
               "integer",
-              "min:0"
+              "min:0",
+              "max:4294967295"
             ]
           },
           {
@@ -86,11 +120,33 @@
             "type": "number",
             "label": "Points expire after (months)",
             "placeholder": "Leave empty for never",
-            "hint": "Points older than this can be retired from Points Activity → Expire Old Points. Nothing expires on its own — a plugin cannot schedule work.",
+            "hint": "Points older than this can be retired from Points Activity \u2192 Expire Old Points. Nothing expires on its own \u2014 a plugin cannot schedule work. Leave empty for never.",
             "rules": [
               "nullable",
               "integer",
-              "min:0"
+              "min:1",
+              "max:1200"
+            ],
+            "persistentHint": true
+          },
+          {
+            "ui": {
+              "type": "field",
+              "cols": {
+                "cols": 12,
+                "md": 6
+              }
+            },
+            "key": "max_redemption_percent",
+            "type": "number",
+            "label": "Most of one order points may cover (%)",
+            "placeholder": "Leave empty for no cap",
+            "hint": "A cap stops a single order being paid for entirely in points. Empty means uncapped.",
+            "rules": [
+              "nullable",
+              "integer",
+              "min:1",
+              "max:100"
             ],
             "persistentHint": true
           }

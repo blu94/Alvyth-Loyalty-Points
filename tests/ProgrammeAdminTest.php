@@ -19,6 +19,7 @@ use Plugin\LoyaltyPoints\Backend\Models\LoyaltyTransaction;
 use Plugin\LoyaltyPoints\Backend\Repositories\LoyaltyMemberRepository;
 use Plugin\LoyaltyPoints\Backend\Repositories\LoyaltyTierRepository;
 use Plugin\LoyaltyPoints\Backend\Services\PointsExpiry;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -207,6 +208,103 @@ class ProgrammeAdminTest extends TestCase
     }
 
     // ------------------------------------------------------------------
+    // LP-13 — bulk expiry is gated on delete, not on create
+    // ------------------------------------------------------------------
+
+    #[Test]
+    public function the_expiry_pages_declare_a_verb_core_will_actually_read(): void
+    {
+        // Pinned by a test rather than by a spelling.
+        //
+        // `GateModuleResource::verbsFor()` falls back to the HTTP method's verb when a page
+        // declares a verb it does not recognise — deliberately, so that a typo cannot narrow
+        // an action to super_admin and take a working screen away from everyone. The flip
+        // side is that for a *destructive* page it falls back toward `create`, so
+        // `"verb": "delete"` mistyped as `"destroy"` silently restores the very defect this
+        // declaration exists to close, with nothing on any screen to say so.
+        $module = json_decode(file_get_contents(dirname(__DIR__) . '/admin/modules/loyalty-members/module.json'), true);
+
+        foreach (['expire', 'expire-undo'] as $slug) {
+            $this->assertSame(
+                'delete',
+                $module['pages'][$slug]['verb'] ?? null,
+                "The {$slug} page must declare the delete verb, spelled exactly as core reads it."
+            );
+            $this->assertSame('loyalty', $module['pages'][$slug]['resource'] ?? null);
+        }
+    }
+
+    #[Test]
+    public function retiring_every_balance_refuses_a_holder_of_create_alone(): void
+    {
+        $this->skipWithoutPageVerbs();
+
+        $operator = $this->operatorHolding('loyalty.view', 'loyalty.create');
+
+        $this->actingAs($operator)
+            ->postJson('/api/admin/modules/loyalty-members/page/expire')
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function retiring_every_balance_admits_a_holder_of_delete(): void
+    {
+        $this->skipWithoutPageVerbs();
+
+        $operator = $this->operatorHolding('loyalty.view', 'loyalty.delete');
+
+        $this->actingAs($operator)
+            ->postJson('/api/admin/modules/loyalty-members/page/expire')
+            ->assertOk();
+    }
+
+    #[Test]
+    public function reading_the_ledger_stays_a_read_however_the_button_is_declared(): void
+    {
+        $this->skipWithoutPageVerbs();
+
+        // The declared verb governs the write and only the write. Gating the Points Activity
+        // screen's own load behind `delete` would hide the ledger from everyone allowed to
+        // look at it but not clear it.
+        $operator = $this->operatorHolding('loyalty.view');
+
+        $this->actingAs($operator)
+            ->getJson('/api/admin/modules/loyalty-members/page/overview')
+            ->assertOk();
+    }
+
+    /**
+     * The floor has to name a version that exists, or it is a promise about nothing.
+     *
+     * This package's LP-13 fix depends on a core capability, and the honest way to express
+     * that is the manifest floor: `PluginInstaller::validate()` refuses a package whose
+     * `requires.ovynt` is not satisfied, so an unsupporting core is turned away at install
+     * rather than running the plugin with a permission gate that silently does not hold.
+     *
+     * This assertion guards the other direction -- declaring a floor **ahead** of the core in
+     * the tree, which would make the package refuse to install on the very core it was built
+     * against. That is the trap in raising a floor to a version somebody has only set locally
+     * and not yet committed.
+     *
+     * Note what this does *not* catch: a floor that is too LOW. `>=1.2.0` is satisfied by
+     * every core from 1.2.0 up, so understating the requirement passes here silently. Pinning
+     * the version a capability arrived in takes an explicit `assertFalse` against the release
+     * below it, which is what to add here once core's page-verb release number is committed.
+     */
+    #[Test]
+    public function the_declared_floor_is_a_version_that_actually_exists(): void
+    {
+        $manifest = json_decode(file_get_contents(dirname(__DIR__) . '/plugin.json'), true);
+        $floor    = $manifest['requires']['ovynt'];
+
+        $this->assertTrue(
+            \App\Services\Plugin\PluginManifest::fromArray($manifest)->satisfiedBy((string) config('ovynt.version')),
+            "The manifest declares {$floor}, which the core in this tree (" . config('ovynt.version')
+            . ') does not satisfy -- the package would refuse to install on it.'
+        );
+    }
+
+    // ------------------------------------------------------------------
     // LP-15 — a tier edit only re-ranks who could have moved
     // ------------------------------------------------------------------
 
@@ -293,6 +391,60 @@ class ProgrammeAdminTest extends TestCase
     private function customer(): User
     {
         return User::factory()->create(['status' => 'active']);
+    }
+
+    /**
+     * An operator holding exactly the named permissions and nothing else.
+     *
+     * A fresh role per test, because the locked roles are granted every `loyalty.*`
+     * permission at install and would admit any verb.
+     */
+    private function operatorHolding(string ...$permissions): User
+    {
+        $role = Role::create(['name' => 'loyalty_gate_' . uniqid(), 'guard_name' => 'web']);
+
+        foreach ($permissions as $permission) {
+            $role->givePermissionTo(Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']));
+        }
+
+        $operator = User::factory()->create(['status' => 'active']);
+        $operator->assignRole($role);
+
+        return $operator;
+    }
+
+    /**
+     * Skip when core cannot read a page's declared verb yet.
+     *
+     * The support is in `GateModuleResource::verbsFor()`, which grew a `$schema` parameter to
+     * carry it. Detected by reflection rather than by asserting the outcome, so that this
+     * suite reports "not yet supported" instead of failing red against a core that has not
+     * landed it — the declaration itself is still pinned, unconditionally, by
+     * `the_expiry_pages_declare_a_verb_core_will_actually_read()`.
+     */
+    private function skipWithoutPageVerbs(): void
+    {
+        $method = new \ReflectionMethod(\App\Http\Middleware\Admin\GateModuleResource::class, 'verbsFor');
+
+        if ($method->getNumberOfParameters() < 2) {
+            // The message names the CONSEQUENCE, not just the cause.
+            //
+            // A skip and a pass look identical at a glance, and "core does not support this
+            // yet" reads as benign housekeeping. What is actually true at that moment is that
+            // LP-13 is live: retiring every customer's balance is authorised by the same grant
+            // that adds one ledger row. Reporting green over a live defect is the same shape as
+            // the defects this package spent a release closing, so the skip says so out loud.
+            //
+            // The load-bearing fix is not this guard -- it is the manifest floor, which makes
+            // an unsupporting core refuse the package at install instead of running it
+            // unguarded. See `the_declared_floor_is_a_version_that_actually_exists()`.
+            $this->markTestSkipped(
+                'LP-13 IS LIVE ON THIS CORE: it cannot read a page-declared verb, so bulk '
+                . 'expiry falls back to the POST verb and is gated on loyalty.create, not '
+                . 'loyalty.delete. The declaration in module.json is inert until core lands '
+                . 'GateModuleResource::verbsFor($request, $schema).'
+            );
+        }
     }
 
     private function memberFor(User $user): ?LoyaltyMember

@@ -4,8 +4,8 @@ A loyalty programme for [Ovynt](https://github.com/blu94): a points ledger, per-
 balances, tier standing and the rules that govern them.
 
 It is also the **reference plugin** — the fullest worked example of what the Ovynt plugin
-system can do, kept deliberately readable so you can copy it as a starting point. MIT
-licensed for exactly that reason.
+system can do, kept deliberately readable so you can learn from it when writing your own. It is
+free of charge, and its source is open to read, for exactly that reason — see [Licence](#licence).
 
 ## Install
 
@@ -293,4 +293,14 @@ field, naming conventions, the repository contract, licensing, signing and updat
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+**Free of charge, not open source.** Copyright (c) 2026 Ovynt Labs — see [LICENSE](LICENSE).
+
+You may install and use this plugin on any Ovynt installation you operate, at no cost and with
+no licence key. You may not resell, redistribute or republish it, on its own or bundled with
+anything else. "Free" is the price; the rights stay with Ovynt Labs. How free and paid Ovynt
+packages differ is set out in
+[LICENSING.md](https://github.com/blu94/Ovynt/blob/main/LICENSING.md).
+
+Because this is the reference plugin, you are welcome to read the source and learn from its
+patterns when writing your own — that is what it is for. That permission covers the techniques
+it demonstrates, not copying substantial parts of it into a package you distribute.

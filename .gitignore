@@ -2,7 +2,7 @@
 /dist
 *.zip
 
-# Written by `php artisan ovynt:plugin-sign` at release time. It covers a digest of
+# Written by `php artisan alvyth:plugin-sign` at release time. It covers a digest of
 # every file, so a committed signature goes stale on the next edit and would then fail
 # verification on a customer's install — build output, not source.
 plugin.sig

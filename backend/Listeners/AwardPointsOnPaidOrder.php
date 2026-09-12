@@ -19,7 +19,7 @@ use Plugin\LoyaltyPoints\Backend\Services\Ledger;
  * liability against money that never arrived, and nothing takes them back. `OrderStatusChanged`
  * carries which axis moved, so this filters for `payment_status → paid`.
  *
- * Ovynt keeps one status event rather than an `OrderPaid`, precisely so the three workflows do
+ * Alvyth keeps one status event rather than an `OrderPaid`, precisely so the three workflows do
  * not each grow their own vocabulary — the filter below is the intended way to consume it.
  *
  * **Not `ShouldQueue`, unlike the core listeners.** Those send email, which is slow and may

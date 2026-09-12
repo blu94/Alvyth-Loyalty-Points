@@ -1,15 +1,15 @@
-# Ovynt Loyalty Points
+# Alvyth Loyalty Points
 
-A loyalty programme for [Ovynt](https://github.com/blu94): a points ledger, per-customer
+A loyalty programme for [Alvyth](https://github.com/blu94): a points ledger, per-customer
 balances, tier standing and the rules that govern them.
 
-It is also the **reference plugin** — the fullest worked example of what the Ovynt plugin
+It is also the **reference plugin** — the fullest worked example of what the Alvyth plugin
 system can do, kept deliberately readable so you can learn from it when writing your own. It is
 free of charge, and its source is open to read, for exactly that reason — see [Licence](#licence).
 
 ## Install
 
-Download the release `.zip`, then in your Ovynt admin:
+Download the release `.zip`, then in your Alvyth admin:
 
 **Plugins → Install a plugin → drop the zip → Install plugin**, then switch it **Enabled**.
 
@@ -200,7 +200,7 @@ Keeping the work in `Support/` is what lets the same badge appear in a builder b
 All are refused at install, but they are the easiest to get wrong and the failures are
 confusing, so they are worth stating:
 
-- **`"api": "/admin/modules/{type}"`** — plural. It is the endpoint Ovynt serves the module
+- **`"api": "/admin/modules/{type}"`** — plural. It is the endpoint Alvyth serves the module
   from, *and* the key the schema engine uses to tell a module from a form field. Omit it and
   you get `Field requires 'key', 'type', and 'label'`.
 - **`"routeBase": "module/{type}"`** — **singular**. It is pushed to the admin router
@@ -244,16 +244,16 @@ types on an entry. It is exported, and the export says so.
 ## Tests
 
 `tests/` ships with the package. There is no separate harness: the plugin's classes only
-exist once Ovynt has installed and enabled it, so the tests run **inside a container, against
-the installed copy**, using the host application's PHPUnit and its `ovynt_test` isolation.
+exist once Alvyth has installed and enabled it, so the tests run **inside a container, against
+the installed copy**, using the host application's PHPUnit and its `alvyth_test` isolation.
 
 ```bash
 # Install into the test database (creates the four tables)
-docker exec -e DB_DATABASE=ovynt_test ovynt_app \
+docker exec -e DB_DATABASE=alvyth_test alvyth_app \
   php artisan plugin:import /var/www/storage/app/plugin-src-tmp/loyalty-points --enable
 
 # Run them
-docker exec ovynt_app php vendor/bin/phpunit \
+docker exec alvyth_app php vendor/bin/phpunit \
   storage/app/plugins/loyalty-points/tests --no-coverage
 ```
 
@@ -267,17 +267,17 @@ end, the redemption cap and earn base, an append-only ledger, and the subject ac
 Reinstall after editing a test; the installed copy is what runs.
 
 Two rules from `.agent/skills/laravel-testing.md` apply unchanged: **`DatabaseTransactions`,
-never `RefreshDatabase`**, and never run two suites at once — these do DDL on `ovynt_test`.
+never `RefreshDatabase`**, and never run two suites at once — these do DDL on `alvyth_test`.
 
 ## Requirements
 
-Ovynt `>=1.2.0 <2.0.0`, declared in `plugin.json` and enforced at install.
+Alvyth `>=1.2.0 <2.0.0`, declared in `plugin.json` and enforced at install.
 
 ## Building a release
 
 ```bash
 # Optional: sign it so installs can verify the package is unaltered.
-php artisan ovynt:plugin-sign /path/to/loyalty-points --key=~/keys/vendor-private.pem
+php artisan alvyth:plugin-sign /path/to/loyalty-points --key=~/keys/vendor-private.pem
 
 # Then zip the directory — never edit a file after signing.
 ```
@@ -288,18 +288,18 @@ licences.
 
 ## Writing your own plugin
 
-See **`PLUGIN-DEVELOPMENT.md`** in the Ovynt repository — package format, every manifest
+See **`PLUGIN-DEVELOPMENT.md`** in the Alvyth repository — package format, every manifest
 field, naming conventions, the repository contract, licensing, signing and update feeds.
 
 ## Licence
 
-**Free of charge, not open source.** Copyright (c) 2026 Ovynt Labs — see [LICENSE](LICENSE).
+**Free of charge, not open source.** Copyright (c) 2026 Alvyth Labs — see [LICENSE](LICENSE).
 
-You may install and use this plugin on any Ovynt installation you operate, at no cost and with
+You may install and use this plugin on any Alvyth installation you operate, at no cost and with
 no licence key. You may not resell, redistribute or republish it, on its own or bundled with
-anything else. "Free" is the price; the rights stay with Ovynt Labs. How free and paid Ovynt
+anything else. "Free" is the price; the rights stay with Alvyth Labs. How free and paid Alvyth
 packages differ is set out in
-[LICENSING.md](https://github.com/blu94/Ovynt/blob/main/LICENSING.md).
+[LICENSING.md](https://github.com/blu94/Alvyth/blob/main/LICENSING.md).
 
 Because this is the reference plugin, you are welcome to read the source and learn from its
 patterns when writing your own — that is what it is for. That permission covers the techniques

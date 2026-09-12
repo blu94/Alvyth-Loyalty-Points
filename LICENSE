@@ -1,7 +1,7 @@
-Ovynt Plugin Licence — Free Edition
-Copyright (c) 2026 Ovynt Labs. All rights reserved.
+Alvyth Plugin Licence — Free Edition
+Copyright (c) 2026 Alvyth Labs. All rights reserved.
 
-This plugin is distributed free of charge for use with Ovynt.
+This plugin is distributed free of charge for use with Alvyth.
 
 "FREE" HERE MEANS FREE OF CHARGE. IT DOES NOT MEAN OPEN SOURCE. You may use
 this plugin without paying for it and without a licence key. You may not
@@ -13,7 +13,7 @@ redistribute it, resell it, or publish it as your own.
 
 You are granted a non-exclusive, non-transferable, revocable right to:
 
-  a. download, install and run this plugin, at no cost, on any Ovynt
+  a. download, install and run this plugin, at no cost, on any Alvyth
      installation you own or operate, with no limit on the number of such
      installations; and
 
@@ -27,7 +27,7 @@ No licence key, activation or payment is required.
 
 The source of this plugin is deliberately readable, and you are welcome to
 read it and to learn from the patterns it demonstrates when writing your own
-Ovynt plugins.
+Alvyth plugins.
 
 That permission covers the techniques, structure and approach it shows. It
 does not permit substantial copying of this plugin's code into a package that
@@ -56,7 +56,7 @@ You may not:
 4. Ownership
 --------------------------------------------------------------------------
 
-Ovynt Labs retains all right, title and interest in this plugin, including
+Alvyth Labs retains all right, title and interest in this plugin, including
 all intellectual property rights. All rights not expressly granted in this
 licence are reserved.
 
@@ -84,7 +84,7 @@ FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NONINFRINGEMENT.
 7. Limitation of liability
 --------------------------------------------------------------------------
 
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL OVYNT
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL ALVYTH
 LABS BE LIABLE FOR ANY CLAIM, DAMAGES, LOSS OF DATA, LOSS OF PROFITS, OR
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF, OR IN CONNECTION WITH THE PLUGIN OR ITS USE.

@@ -22,7 +22,7 @@ use Tests\TestCase;
  * here is invisible until a customer complains. It is also where the worst bug this package
  * has had lived: a refund used to *raise* lifetime points and promote the customer a tier.
  *
- * All three subscribe to one `OrderStatusChanged` and filter on `field` and `to` — Ovynt keeps
+ * All three subscribe to one `OrderStatusChanged` and filter on `field` and `to` — Alvyth keeps
  * a single status event rather than an `OrderPaid`, so getting that filter wrong means firing
  * on fulfilment or order-status changes as well.
  */

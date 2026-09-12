@@ -24,9 +24,9 @@ use Tests\TestCase;
  *
  * Run these against a container with the plugin installed into the test database:
  *
- *   docker exec -e DB_DATABASE=ovynt_test ovynt_app \
+ *   docker exec -e DB_DATABASE=alvyth_test alvyth_app \
  *     php artisan plugin:import /var/www/storage/app/plugin-src-tmp/loyalty-points --enable
- *   docker exec ovynt_app php vendor/bin/phpunit \
+ *   docker exec alvyth_app php vendor/bin/phpunit \
  *     storage/app/plugins/loyalty-points/tests --no-coverage
  */
 class LoyaltyLedgerTest extends TestCase

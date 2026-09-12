@@ -278,7 +278,7 @@ class ProgrammeAdminTest extends TestCase
      *
      * This package's LP-13 fix depends on a core capability, and the honest way to express
      * that is the manifest floor: `PluginInstaller::validate()` refuses a package whose
-     * `requires.ovynt` is not satisfied, so an unsupporting core is turned away at install
+     * `requires.alvyth` is not satisfied, so an unsupporting core is turned away at install
      * rather than running the plugin with a permission gate that silently does not hold.
      *
      * This assertion guards the other direction -- declaring a floor **ahead** of the core in
@@ -295,11 +295,11 @@ class ProgrammeAdminTest extends TestCase
     public function the_declared_floor_is_a_version_that_actually_exists(): void
     {
         $manifest = json_decode(file_get_contents(dirname(__DIR__) . '/plugin.json'), true);
-        $floor    = $manifest['requires']['ovynt'];
+        $floor    = $manifest['requires']['alvyth'];
 
         $this->assertTrue(
-            \App\Services\Plugin\PluginManifest::fromArray($manifest)->satisfiedBy((string) config('ovynt.version')),
-            "The manifest declares {$floor}, which the core in this tree (" . config('ovynt.version')
+            \App\Services\Plugin\PluginManifest::fromArray($manifest)->satisfiedBy((string) config('alvyth.version')),
+            "The manifest declares {$floor}, which the core in this tree (" . config('alvyth.version')
             . ') does not satisfy -- the package would refuse to install on it.'
         );
     }

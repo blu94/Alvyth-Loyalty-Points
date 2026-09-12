@@ -1,6 +1,6 @@
 # Normalise every text file to LF, in the repository and in working copies.
 #
-# Not cosmetic for a plugin. `ovynt:plugin-sign` signs a SHA-256 digest of every file's
+# Not cosmetic for a plugin. `alvyth:plugin-sign` signs a SHA-256 digest of every file's
 # contents, so if git hands a Windows checkout CRLF and a Linux checkout LF, the same
 # commit produces two different digests — and a package signed on one machine fails
 # verification after being cloned on the other. Pinning the line ending is what makes the

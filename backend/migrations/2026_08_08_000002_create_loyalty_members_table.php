@@ -25,7 +25,7 @@ return new class extends Migration
         Schema::create('loyalty_members', function (Blueprint $table) {
             $table->id();
 
-            // Customers are core `users` — Ovynt has no separate customers table, and
+            // Customers are core `users` — Alvyth has no separate customers table, and
             // `orders.user_id` points here too. Cascade: a deleted user's points cannot
             // belong to anyone.
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();

@@ -17,3 +17,7 @@ plugin.sig
 Thumbs.db
 .idea/
 .vscode/
+
+# Graphify knowledge graph. Regenerated locally from source by
+# `graphify update .`; never a source of truth, and large.
+/graphify-out

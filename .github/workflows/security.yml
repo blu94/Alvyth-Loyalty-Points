@@ -1,0 +1,65 @@
+name: Security scan
+
+# One adaptive workflow, identical in every Alvyth repo.
+# It runs the same checks everywhere and skips the ones a repo has no input for
+# (composer audit only where composer.json exists, pnpm audit only where
+# package.json exists). Warn mode: every step reports but never fails the run,
+# so it will not block pushes or PRs while you clear the initial findings.
+# To make a check blocking later, remove its `continue-on-error` and the
+# trailing `|| true` for that step.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks scans full git history
+
+      - name: Secret scan (gitleaks)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
+            detect --source=/repo --redact -v || true
+
+      - name: Static analysis (Semgrep)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "$PWD:/src" semgrep/semgrep \
+            semgrep scan --config=p/security-audit --config=p/secrets \
+            --metrics=off /src || true
+
+      - name: Vulnerabilities & misconfig (Trivy)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "$PWD:/src" aquasec/trivy:latest \
+            fs --scanners vuln,secret,misconfig --exit-code 0 /src || true
+
+      - name: PHP dependency audit (composer)
+        continue-on-error: true
+        run: |
+          if [ -f composer.json ]; then
+            docker run --rm -v "$PWD:/app" -w /app composer:2 \
+              composer audit --no-interaction || true
+          else
+            echo "No composer.json in this repo - skipping composer audit."
+          fi
+
+      - name: JS dependency audit (pnpm)
+        continue-on-error: true
+        run: |
+          if [ -f package.json ]; then
+            corepack enable
+            pnpm install --ignore-scripts --no-frozen-lockfile || true
+            pnpm audit || true
+          else
+            echo "No package.json in this repo - skipping pnpm audit."
+          fi
